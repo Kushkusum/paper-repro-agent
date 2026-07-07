@@ -8,7 +8,7 @@ from agent.orchestrator import run_pipeline
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Autonomous paper-to-code reproduction agent")
-    parser.add_argument("paper", type=Path, help="Path to a raw text file of the paper")
+    parser.add_argument("paper", type=Path, help="Path to the paper: a .pdf or a raw .txt file")
     parser.add_argument(
         "--focus",
         required=True,
