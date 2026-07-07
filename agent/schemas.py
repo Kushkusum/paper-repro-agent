@@ -139,6 +139,24 @@ class IterationRecord(BaseModel):
     legitimacy: LegitimacyCheck | None = None
 
 
+class VariantProposal(BaseModel):
+    description: str = Field(description="The one small, well-motivated change to try, in plain language")
+    motivation: str = Field(description="Why this specific change is a reasonable thing to try, grounded in the method")
+    predicted_effect: str = Field(
+        description="A concrete, checkable qualitative prediction, e.g. 'regret should decrease' or "
+        "'the ratio should shrink' — must be falsifiable against the measured metric(s)"
+    )
+    predicted_direction: Literal["increase", "decrease", "no_meaningful_change"]
+
+
+class VariantResult(BaseModel):
+    proposal: VariantProposal
+    baseline_metrics: dict[str, float]
+    variant_metrics: dict[str, float]
+    prediction_held: bool
+    analysis: str = Field(description="Whether the actual change matched the predicted direction, and why")
+
+
 class ReproductionReport(BaseModel):
     paper_title: str
     spec: PaperSpec
@@ -147,3 +165,4 @@ class ReproductionReport(BaseModel):
     iterations: list[IterationRecord] = Field(default_factory=list)
     final_verdict: str
     final_reasoning: str
+    variant: VariantResult | None = None

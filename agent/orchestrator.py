@@ -13,7 +13,8 @@ from .legitimacy import verify_legitimacy
 from .pdf_ingest import load_paper_text
 from .planner import draft_plan
 from .report import write_report
-from .schemas import Diagnosis, FeasibilityAssessment, IterationRecord, ReproductionReport
+from .schemas import Diagnosis, FeasibilityAssessment, IterationRecord, ReproductionReport, VariantResult
+from .variant import run_variant_experiment
 
 RUNS_DIR = Path(__file__).resolve().parent.parent / "runs"
 
@@ -29,6 +30,7 @@ def run_pipeline(
     paper_title: str,
     max_iterations: int = 4,
     log=print,
+    propose_variant: bool = False,
 ) -> Path:
     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     run_dir = RUNS_DIR / f"{timestamp}_{_slugify(paper_title)}"
@@ -75,6 +77,7 @@ def run_pipeline(
     iterations: list[IterationRecord] = []
     final_verdict = "unknown"
     final_reasoning = ""
+    winning_metrics: dict[str, float] = {}
 
     for i in range(1, max_iterations + 1):
         try:
@@ -102,6 +105,7 @@ def run_pipeline(
                         f"iteration {i}, and the match was verified as a genuine measurement, not a "
                         "hardcoded/formula pass-through."
                     )
+                    winning_metrics = result.parsed_metrics
                     break
 
                 log("  -> match rejected as non-genuine; treating as a bug and retrying...")
@@ -163,6 +167,15 @@ def run_pipeline(
             )
             break
 
+    variant: VariantResult | None = None
+    if propose_variant and final_verdict == "reproduced":
+        try:
+            log("[extra] Proposing and testing a novel variant of the reproduced method...")
+            variant = run_variant_experiment(spec, code, winning_metrics, run_dir)
+            log(f"  -> prediction_held={variant.prediction_held}")
+        except Exception as e:
+            log(f"  -> variant experiment failed (non-fatal, main reproduction result stands): {e}")
+
     log("[6/6] Writing report...")
 
     report = ReproductionReport(
@@ -173,6 +186,7 @@ def run_pipeline(
         iterations=iterations,
         final_verdict=final_verdict,
         final_reasoning=final_reasoning,
+        variant=variant,
     )
     report_path = write_report(report, run_dir)
     log(f"Done. Report: {report_path}")

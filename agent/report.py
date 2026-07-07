@@ -62,6 +62,33 @@ def render_markdown(report: ReproductionReport) -> str:
             lines.append(f"**Proposed fix:** {it.diagnosis.proposed_fix}")
         lines.append("")
 
+    if report.variant is not None:
+        v = report.variant
+        lines += [
+            "## Proposed Variant",
+            "",
+            f"**Change:** {v.proposal.description}",
+            "",
+            f"**Motivation:** {v.proposal.motivation}",
+            "",
+            f"**Prediction:** {v.proposal.predicted_direction} — {v.proposal.predicted_effect}",
+            "",
+            "| metric | baseline | variant |",
+            "|---|---|---|",
+        ]
+        for name in v.baseline_metrics:
+            base_val = v.baseline_metrics.get(name)
+            var_val = v.variant_metrics.get(name)
+            var_str = f"{var_val:.4g}" if var_val is not None else "N/A"
+            lines.append(f"| {name} | {base_val:.4g} | {var_str} |")
+        lines += [
+            "",
+            f"**Prediction held:** {v.prediction_held}",
+            "",
+            v.analysis,
+            "",
+        ]
+
     return "\n".join(lines)
 
 

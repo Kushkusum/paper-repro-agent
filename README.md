@@ -2,7 +2,7 @@
 
 Autonomous agent that reproduces a paper's reported experimental result at reduced scale:
 
-```
+```text
 paper text --> extractor (LLM) --> PaperSpec (method, setup, target metrics)
             --> planner (LLM)   --> ImplementationPlan
             --> coder (LLM)     --> GeneratedCode
@@ -32,7 +32,7 @@ meta-llama/llama-4-scout-17b-16e-instruct, llama-3.1-8b-instant`) rather than cr
 
 ## Run
 
-```
+```bash
 python main.py papers/thompson_sampling_raw.txt \
   --title "An Empirical Evaluation of Thompson Sampling" \
   --focus "Section 3, Table 1: regret of Thompson Sampling vs UCB on a Bernoulli bandit under varying feedback delay" \
@@ -52,6 +52,26 @@ itself) rather than one relying on proprietary/private data the paper can't hand
 can't reproduce what it can't obtain. For the included Thompson Sampling paper, Section 3's Bernoulli
 bandit simulations (Figure 1, Table 1) are self-contained; Sections 4-5 use private Yahoo! ad/news
 click data and are not reproducible from the paper alone.
+
+## Proposing a novel variant
+
+Add `--propose-variant` to have the agent go one step past reproduction: once a result is
+genuinely reproduced, it proposes one small, method-grounded change (e.g. a different threshold,
+prior, or update rule), states a concrete falsifiable prediction for which direction the metric
+should move, implements and runs the variant, and reports whether the prediction actually held.
+
+```bash
+python main.py papers/precommitment_best_choice_raw.txt \
+  --title "The pre-commitment best-choice problem: exact finite-n formulas" \
+  --focus "..." --propose-variant
+```
+
+Example real result: for the best-choice/secretary-problem reproduction, the agent proposed
+raising the optimal stopping threshold by 5% ("might reduce stopping too early"), predicted the
+win rate would *increase* — and it dropped from 0.522 to 0.010 instead, because a threshold that
+close to 1 is essentially never exceeded by a Uniform(0,1) draw, so the rule degenerates to
+"always take the last draw," which only wins with probability 1/n. The agent correctly reported
+the prediction failed and explained why, rather than just running the numbers.
 
 ## Testing
 
