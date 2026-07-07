@@ -4,12 +4,15 @@ import json
 import os
 import re
 import sys
+import time
 from typing import Any, TypeVar
 
 import groq
 from dotenv import load_dotenv
 from groq import Groq
 from pydantic import BaseModel, ValidationError
+
+from .schemas import BudgetSummary
 
 load_dotenv()
 
@@ -29,6 +32,31 @@ _fallbacks_env = os.environ.get("GROQ_MODEL_FALLBACKS")
 MODEL_FALLBACKS = [m.strip() for m in _fallbacks_env.split(",")] if _fallbacks_env else DEFAULT_FALLBACKS
 
 _client: Groq | None = None
+
+# Per-run compute-budget tracking (tokens/calls/wall-time). Reset at the start of each
+# run_pipeline() call and read back into the report at the end -- see agent/orchestrator.py.
+_call_log: list[dict[str, Any]] = []
+
+
+def reset_budget() -> None:
+    _call_log.clear()
+
+
+def get_budget_summary() -> BudgetSummary:
+    calls_by_model: dict[str, int] = {}
+    tokens_by_model: dict[str, int] = {}
+    for c in _call_log:
+        calls_by_model[c["model"]] = calls_by_model.get(c["model"], 0) + 1
+        tokens_by_model[c["model"]] = tokens_by_model.get(c["model"], 0) + c["total_tokens"]
+    return BudgetSummary(
+        total_calls=len(_call_log),
+        total_prompt_tokens=sum(c["prompt_tokens"] for c in _call_log),
+        total_completion_tokens=sum(c["completion_tokens"] for c in _call_log),
+        total_tokens=sum(c["total_tokens"] for c in _call_log),
+        total_wall_time_sec=sum(c["wall_time_sec"] for c in _call_log),
+        calls_by_model=calls_by_model,
+        tokens_by_model=tokens_by_model,
+    )
 
 
 def client() -> Groq:
@@ -50,8 +78,20 @@ def _model_chain(preferred: str) -> list[str]:
 def _create_completion(preferred_model: str, **kwargs: Any):
     last_error: Exception | None = None
     for model in _model_chain(preferred_model):
+        start = time.monotonic()
         try:
-            return client().chat.completions.create(model=model, **kwargs), model
+            resp = client().chat.completions.create(model=model, **kwargs)
+            usage = getattr(resp, "usage", None)
+            _call_log.append(
+                {
+                    "model": model,
+                    "prompt_tokens": getattr(usage, "prompt_tokens", 0) or 0,
+                    "completion_tokens": getattr(usage, "completion_tokens", 0) or 0,
+                    "total_tokens": getattr(usage, "total_tokens", 0) or 0,
+                    "wall_time_sec": time.monotonic() - start,
+                }
+            )
+            return resp, model
         except groq.APIStatusError as e:
             last_error = e
             print(f"[llm] {model} unavailable ({e.__class__.__name__}), trying next fallback model...", file=sys.stderr)

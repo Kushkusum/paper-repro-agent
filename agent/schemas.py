@@ -139,6 +139,24 @@ class IterationRecord(BaseModel):
     legitimacy: LegitimacyCheck | None = None
 
 
+class LLMCallRecord(BaseModel):
+    model: str
+    prompt_tokens: int
+    completion_tokens: int
+    total_tokens: int
+    wall_time_sec: float
+
+
+class BudgetSummary(BaseModel):
+    total_calls: int
+    total_prompt_tokens: int
+    total_completion_tokens: int
+    total_tokens: int
+    total_wall_time_sec: float
+    calls_by_model: dict[str, int] = Field(default_factory=dict)
+    tokens_by_model: dict[str, int] = Field(default_factory=dict)
+
+
 class VariantProposal(BaseModel):
     description: str = Field(description="The one small, well-motivated change to try, in plain language")
     motivation: str = Field(description="Why this specific change is a reasonable thing to try, grounded in the method")
@@ -166,3 +184,4 @@ class ReproductionReport(BaseModel):
     final_verdict: str
     final_reasoning: str
     variant: VariantResult | None = None
+    budget: BudgetSummary | None = None

@@ -4,7 +4,7 @@ import datetime
 import re
 from pathlib import Path
 
-from . import coder, sandbox
+from . import coder, llm, sandbox
 from .diagnostic import diagnose
 from .evaluator import evaluate
 from .extractor import extract_spec
@@ -36,6 +36,7 @@ def run_pipeline(
     run_dir = RUNS_DIR / f"{timestamp}_{_slugify(paper_title)}"
     run_dir.mkdir(parents=True, exist_ok=True)
 
+    llm.reset_budget()
     feasibility: FeasibilityAssessment | None = None
 
     try:
@@ -59,6 +60,7 @@ def run_pipeline(
                 feasibility=feasibility,
                 final_verdict=feasibility.verdict,
                 final_reasoning=feasibility.reasoning,
+                budget=llm.get_budget_summary(),
             )
             report_path = write_report(report, run_dir)
             log(f"Done. Report: {report_path}")
@@ -187,6 +189,7 @@ def run_pipeline(
         final_verdict=final_verdict,
         final_reasoning=final_reasoning,
         variant=variant,
+        budget=llm.get_budget_summary(),
     )
     report_path = write_report(report, run_dir)
     log(f"Done. Report: {report_path}")

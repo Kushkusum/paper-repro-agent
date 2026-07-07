@@ -2,7 +2,24 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from .schemas import ReproductionReport
+from .schemas import BudgetSummary, ReproductionReport
+
+
+def _render_budget(budget: BudgetSummary) -> list[str]:
+    lines = [
+        "## Compute Budget",
+        "",
+        f"{budget.total_calls} LLM call(s), {budget.total_tokens:,} total tokens "
+        f"({budget.total_prompt_tokens:,} prompt + {budget.total_completion_tokens:,} completion), "
+        f"{budget.total_wall_time_sec:.1f}s of LLM wall-clock time.",
+        "",
+    ]
+    if budget.calls_by_model:
+        lines += ["| model | calls | tokens |", "|---|---|---|"]
+        for model, calls in budget.calls_by_model.items():
+            lines.append(f"| {model} | {calls} | {budget.tokens_by_model.get(model, 0):,} |")
+        lines.append("")
+    return lines
 
 
 def render_markdown(report: ReproductionReport) -> str:
@@ -35,6 +52,8 @@ def render_markdown(report: ReproductionReport) -> str:
         ]
 
     if report.plan is None:
+        if report.budget is not None:
+            lines += [""] + _render_budget(report.budget)
         return "\n".join(lines)
 
     lines += ["", "## Implementation Plan", "", report.plan.approach, ""]
@@ -88,6 +107,9 @@ def render_markdown(report: ReproductionReport) -> str:
             v.analysis,
             "",
         ]
+
+    if report.budget is not None:
+        lines += _render_budget(report.budget)
 
     return "\n".join(lines)
 
