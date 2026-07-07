@@ -1,0 +1,38 @@
+Further Optimal Regret Bounds for Thompson Sampling
+Shipra Agrawal, Navin Goyal (Microsoft Research India), arXiv:1209.3353
+
+Abstract: Thompson Sampling is one of the oldest heuristics for multi-armed bandit problems. In
+this paper, we provide a novel regret analysis for Thompson Sampling that simultaneously proves
+both the optimal problem-dependent bound of (1+eps) * sum_i ln(T)/Delta_i + O(N/eps^2) and the
+first near-optimal problem-independent bound of O(sqrt(N*T*ln T)) on the expected regret of this
+algorithm. Our near-optimal problem-independent bound solves a COLT 2012 open problem of Chapelle
+and Li.
+
+[Note: this paper's own Theorem 1/2 bounds for Thompson Sampling itself are NOT fully closed-form
+-- the O(N/eps^2) and O(sqrt(N T ln T)) terms hide unspecified constants, unlike UCB1's bound
+below. They are not usable as a precise numeric reproduction target.]
+
+Relevant excerpt (literature comparison section, page 3):
+
+"Let us contrast our bounds with the previous work. Let us first consider the problem-dependent
+regret bounds, i.e., regret bounds that depend on problem parameters mu_i, Delta_i, i=1,...,N.
+Lai and Robbins [15] essentially proved the following lower bound on the regret of any bandit
+algorithm: E[R(T)] >= [sum_{i=2}^N Delta_i / d(mu_i, mu_1) + o(1)] ln T.
+
+Auer et al. [4] gave the UCB1 algorithm, which is efficient and achieves the following bound:
+
+  E[R(T)] <= [8 * sum_{i=2}^N 1/Delta_i] * ln T  +  (1 + pi^2/3) * (sum_{i=2}^N Delta_i)
+
+More recently, Kaufmann et al. [13] gave Bayes-UCB algorithm which achieves the lower bound of
+[15] for Bernoulli rewards."
+
+This is the IDENTICAL closed-form regret bound stated as Theorem 1 in Auer, Cesa-Bianchi & Fischer
+(2002), "Finite-time Analysis of the Multiarmed Bandit Problem" (already in this benchmark, see
+papers/ucb1_multiarmed_bandit_raw.txt): "its expected regret after any number n of plays is at most
+[8 * sum_{i:mu_i<mu*} (ln n)/Delta_i] + (1 + pi^2/3) * sum_{j=1}^K Delta_j" -- same formula, just
+n/K relabeled as T/N and the ln T factored out of the sum.
+
+Two independent papers -- different authors, different years (2002 vs 2012), different primary
+subjects (Auer et al.'s own algorithm UCB1, vs. Agrawal & Goyal's regret analysis of a completely
+different algorithm, Thompson Sampling, which merely cites UCB1's bound for comparison in their
+related-work section) -- state the exact same mathematical claim about UCB1's regret bound.

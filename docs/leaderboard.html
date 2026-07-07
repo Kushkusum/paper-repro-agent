@@ -368,6 +368,50 @@ details.reasoning p {
   margin: 10px 0 2px;
 }
 
+.callout {
+  margin-top: 14px;
+  padding: 14px 18px;
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+  border-radius: 0 8px 8px 0;
+}
+
+.callout-label {
+  font-family: 'Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 8px;
+}
+
+.callout p:not(.callout-label) {
+  font-family: 'Plex Serif', Georgia, serif;
+  font-size: 14.5px;
+  color: var(--text);
+  line-height: 1.6;
+  max-width: 68ch;
+  margin: 0;
+}
+
+.callout a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: var(--accent-soft);
+}
+
+.callout a:hover,
+.callout a:focus-visible {
+  text-decoration-color: var(--accent);
+}
+
+.callout a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 /* ---------- Footer ---------- */
 
 footer {
@@ -566,6 +610,16 @@ footer .colophon a:focus-visible {
           theorem's bound, with no reference to the bound formula anywhere in the reporting
           step. That is what a genuine reproduction of a proven guarantee looks like.</p>
         </details>
+      </div>
+
+      <div class="callout">
+        <p class="callout-label">Cross-paper comparison</p>
+        <p>Agrawal &amp; Goyal, <em>Further Optimal Regret Bounds for Thompson Sampling</em>
+        (2012) — a different paper, a decade later, no overlapping authors, analysing a
+        completely different algorithm — cites this exact same bound for UCB1 in its
+        related-work section as a point of comparison. Two independent papers, one claim: the
+        run above verifies both at once. Details in
+        <a href="https://github.com/Kushkusum/paper-repro-agent/blob/master/CROSS_PAPER_COMPARISON.md">CROSS_PAPER_COMPARISON.md</a>.</p>
       </div>
     </div>
 

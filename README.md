@@ -55,6 +55,13 @@ can't reproduce what it can't obtain. For the included Thompson Sampling paper, 
 bandit simulations (Figure 1, Table 1) are self-contained; Sections 4-5 use private Yahoo! ad/news
 click data and are not reproducible from the paper alone.
 
+## Cross-paper comparison
+
+See [`CROSS_PAPER_COMPARISON.md`](CROSS_PAPER_COMPARISON.md): two independent papers, a decade
+apart, turn out to state the identical closed-form UCB1 regret bound — one deriving it, the other
+citing it. This benchmark's existing UCB1 reproduction verifies both papers' shared claim in a
+single run.
+
 ## Proposing a novel variant
 
 Add `--propose-variant` to have the agent go one step past reproduction: once a result is
