@@ -1,6 +1,6 @@
 # Reproducibility Leaderboard
 
-5 experiment(s) attempted across 3 paper(s).
+6 experiment(s) attempted across 4 paper(s).
 
 | Paper | Verdict | Metrics (reported vs observed) | Iterations |
 |---|---|---|---|
@@ -9,6 +9,7 @@
 | An Empirical Evaluation of Thompson Sampling<br><sub>7 metrics: ratio_ucb_ts_1, ratio_ucb_ts_10, ratio_ucb_ts_100, ratio_ucb_ts_1000, ratio_ucb_ts_3, ratio_ucb_ts_316, ratio_ucb_ts_32</sub> | ⚠️ unresolved | `ratio_ucb_ts_1`: 2.65 vs -1.645<br>`ratio_ucb_ts_3`: 2.68 vs 0.2607<br>`ratio_ucb_ts_10`: 2.84 vs -0.1707<br>`ratio_ucb_ts_32`: 2.98 vs 0.4077<br>`ratio_ucb_ts_100`: 3.22 vs -0.08131<br>`ratio_ucb_ts_316`: 3.6 vs -0.08062<br>`ratio_ucb_ts_1000`: 3.82 vs -0.004689 | 6 |
 | Enhanced Qwen-VL 7B Model via Instruction Finetuning on Chinese Medical Dataset<br><sub>1 metric: Rouge-1 score</sub> | 🚫 infeasible (GPU) | — | 0 |
 | Finite-time Analysis of the Multiarmed Bandit Problem<br><sub>1 metric: ucb1_regret_bound</sub> | ⚠️ unresolved | `ucb1_regret_bound`: 308.3 vs 308.3 | 6 |
+| The pre-commitment best-choice problem: exact finite-n formulas<br><sub>1 metric: simulated_win_probability</sub> | ✅ reproduced | `simulated_win_probability`: 0.5218 vs 0.527 | 1 |
 
 ## Details
 
@@ -41,3 +42,9 @@ The paper's method involves fine-tuning a 7B parameter model (Qwen-VL), which re
 **Verdict:** ⚠️ unresolved (`20260707-220136_finite-time-analysis-of-the-multiarmed-b`)
 
 Reached the cap of 6 iterations; the last apparent match was rejected as non-genuine: The reported value 'ucb1_regret_bound' is computed directly from the 'calculate_theoretical_regret_bound' function using known parameters (n, arm_means). The 'simulated_regret' variable, which is derived from actual simulated data via the 'ucb1' function, is not used in the computation of the reported metric. The 'theoretical_regret_bound' is calculated using a formula that only depends on known constants and parameters, not on any simulated outcome.
+
+### The pre-commitment best-choice problem: exact finite-n formulas — 1 metric: simulated_win_probability
+
+**Verdict:** ✅ reproduced (`20260707-223632_the-pre-commitment-best-choice-problem-e`)
+
+All 1 target metric(s) fell within tolerance on iteration 1, and the match was verified as a genuine measurement, not a hardcoded/formula pass-through.

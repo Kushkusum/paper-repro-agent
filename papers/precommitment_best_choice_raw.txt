@@ -1,0 +1,65 @@
+The pre-commitment best-choice problem: exact finite-n formulas
+Marcos Costa Santos Carreira (arXiv:1805.11556)
+
+Abstract: In the full-information best-choice problem of Gilbert and Mosteller (1966), n i.i.d.
+uniform draws are observed in sequence and the player, knowing n, stops at one with the goal of
+catching the overall maximum. The optimal rule is adaptive -- accept a draw only if it is a running
+maximum and exceeds a round-dependent threshold -- and its win probability converges to 0.580164.
+We study the restricted, non-adaptive PRE-COMMITMENT class, in which the thresholds are fixed in
+advance and the player stops at the first draw above its threshold, with no running-maximum check.
+We derive exact finite-n formulas, in closed form through the digamma function for a single repeated
+threshold, together with the optimal threshold, all validated by simulation. The single-threshold
+case gives an asymptotic win probability of 0.51735, below the optimal 0.580164.
+
+1. Setup
+
+n measurements are drawn i.i.d. from a Uniform(0,1) distribution and observed one at a time, in
+sequence. After observing each draw, the player must decide immediately and irrevocably whether to
+"stop" and select that draw, or continue to the next one (if no draw was ever selected, the player
+is forced to take the last one, draw n). The player wins if the draw they stopped at is the overall
+maximum of all n draws. This is the full-information Gilbert-Mosteller (1966) best-choice problem.
+
+2. The pre-commitment (single-threshold) rule being reproduced here
+
+Unlike the optimal ADAPTIVE rule (which requires checking, at each round, whether the current draw
+is a running maximum AND exceeds a round-dependent threshold), the PRE-COMMITMENT SINGLE-THRESHOLD
+rule fixes one single threshold k in advance (0 < k < 1) and simply stops at the FIRST draw whose
+value exceeds k, regardless of whether it is a running maximum. If no draw ever exceeds k, the
+player is forced to take the last draw (draw n).
+
+The per-round win probability under a single repeated threshold k is (Equation 11-13 of the paper):
+
+  P_W(n, r) = k^(r-1)/(n-r+1) - k^n/(n-r+1)   for 1 <= r <= n-1
+  P_W(n, n) = k^n / n
+
+and the overall win probability, summed over rounds, has the closed-form (Equation 13):
+
+  P_Wk(n) = k^n * [ sum_{r=1}^{n} 1/((n-r+1) * k^(n-r+1)) - (digamma(n) + euler_gamma) ]
+
+where digamma is the digamma function (scipy.special.digamma) and euler_gamma ~= 0.5772156649
+is the Euler-Mascheroni constant. Note that digamma(n) + euler_gamma equals the harmonic number
+H_{n-1} = sum_{m=1}^{n-1} 1/m.
+
+The OPTIMAL threshold k* for a given n is found by maximizing P_Wk(n) over k in (0, 1) numerically
+(e.g. via scipy.optimize.minimize_scalar with bounds (0,1), or a fine grid search) -- there is no
+simpler closed form for k* itself, but the closed-form P_Wk(n) formula above makes this a fast
+1-dimensional optimization. For large n, k* is close to 1 - 1.5/n, but the reported numbers in
+Table 1 used the numerically-optimized k*, not this approximation.
+
+3. Reported experimental result to reproduce (Table 1, n=100)
+
+"Table 1: Simulated win probabilities, n=100" reports the actual Monte Carlo simulated win rate
+(not just the closed-form theoretical value) obtained by: (a) finding the optimal threshold k* for
+n=100 by maximizing the closed-form P_Wk(100) formula above, then (b) running many repetitions of
+the actual game (draw 100 i.i.d. Uniform(0,1) values, apply the single-threshold stopping rule with
+that k*, record whether the selected draw was the true maximum), and (c) reporting the fraction of
+repetitions that won.
+
+Reported value: "Pre-commitment, single threshold: 0.5218" at n=100 (converging to the asymptotic
+value 0.51735 as n -> infinity). This is a genuine Monte Carlo simulation result, not merely the
+closed-form P_Wk(100) value evaluated analytically -- the paper explicitly simulated actual games
+with the optimized threshold to obtain this number, confirming the closed-form formulas are exact
+("The predictions match the simulations to four decimal places for all tested n").
+
+This experiment is fully self-contained: no external data, no GPU, pure synthetic uniform random
+draws and closed-form optimization, easily implemented with numpy and scipy alone.
