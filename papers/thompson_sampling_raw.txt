@@ -1,0 +1,405 @@
+An Empirical Evaluation of Thompson Sampling
+Olivier Chapelle
+Yahoo! Research
+Santa Clara, CA
+chap@yahoo-inc.com
+Lihong Li
+Yahoo! Research
+Santa Clara, CA
+lihong@yahoo-inc.com
+Abstract
+Thompson sampling is one of oldest heuristic to address the e xploration / ex-
+ploitation trade-off, but it is surprisingly unpopular in t he literature. We present
+here some empirical results using Thompson sampling on simulated and real data,
+and show that it is highly competitive. And since this heuris tic is very easy to
+implement, we argue that it should be part of the standard bas elines to compare
+against.
+1 Introduction
+Various algorithms have been proposed to solve exploration / exploitation or bandit problems. One
+of the most popular is Upper Conﬁdence Bound or UCB [7, 3], for which strong theoretical guar-
+antees on the regret can be proved. Another representative is the Bayes-optimal approach of Gittins
+[4] that directly maximizes expected cumulative payoffs wi th respect to a given prior distribution.
+A less known family of algorithms is the so-called probability matching. The idea of this heuristic
+is old and dates back to [16]. This is the reason why this schem e is also referred to as Thompson
+sampling.
+The idea of Thompson sampling is to randomly draw each arm according to its probability of being
+optimal. In contrast to a full Bayesian method like Gittins index, one can often implement Thompson
+sampling efﬁciently. Recent results using Thompson sampli ng seem promising [5, 6, 14, 12]. The
+reason why it is not very popular might be because of its lack o f theoretical analysis. Only two
+papers have tried to provide such analysis, but they were only able to prove asymptotic convergence
+[6, 11].
+In this work, we present some empirical results, ﬁrst on a sim ulated problem and then on two real-
+world ones: display advertisement selection and news article recommendation. In all cases, despite
+its simplicity, Thompson sampling achieves state-of-the-art results, and in some cases signiﬁcantly
+outperforms other alternatives like UCB. The ﬁndings sugge st the necessity to include Thompson
+sampling as part of the standard baselines to compare against, and to develop ﬁnite-time regret bound
+for this empirically successful algorithm.
+2 Algorithm
+The contextual bandit setting is as follows. At each round we have a context x (optional) and a set
+of actions A. After choosing an action a ∈ A , we observe a reward r. The goal is to ﬁnd a policy
+that selects actions such that the cumulative reward is as large as possible.
+Thompson sampling is best understood in a Bayesian setting as follows. The set of past observations
+D is made of triplets (xi, ai, ri) and are modeled using a parametric likelihood functionP (r|a, x, θ)
+depending on some parameters θ. Given some prior distribution P (θ) on these parameters, the pos-
+terior distribution of these parameters is given by the Bayes rule, P (θ|D) ∝ ∏ P (ri|ai, xi, θ)P (θ).
+1
+In the realizable case, the reward is a stochastic function o f the action, context and the unknown,
+true parameter θ∗. Ideally, we would like to choose the action maximizing the e xpected reward,
+maxa E(r|a, x, θ∗).
+Of course, θ∗ is unknown. If we are just interested in maximizing the immed iate reward (exploita-
+tion), then one should choose the action that maximizes E(r|a, x) =
+∫
+E(r|a, x, θ)P (θ|D)dθ.
+But in an exploration / exploitation setting, the probabili ty matching heuristic consists in randomly
+selecting an action a according to its probability of being optimal. That is, acti on a is chosen with
+probability ∫
+I
+[
+E(r|a, x, θ) = max
+a′
+E(r|a′, x, θ)
+]
+P (θ|D)dθ,
+where I is the indicator function. Note that the integral does not ha ve to be computed explicitly: it
+sufﬁces to draw a random parameter θ at each round as explained in Algorithm 1. Implementation
+of the algorithm is thus efﬁcient and straightforward in most applications.
+Algorithm 1 Thompson sampling
+D = ∅
+for t = 1, . . . , T do
+Receive context xt
+Draw θt according to P (θ|D)
+Select at = arg maxa Er(r|xt, a, θt)
+Observe reward rt
+D = D ∪ (xt, at, rt)
+end for
+In the standard K-armed Bernoulli bandit , each action corresponds to the choice of an arm. The
+reward of thei-th arm follows a Bernoulli distribution with meanθ∗
+i . It is standard to model the mean
+reward of each arm using a Beta distribution since it is the co njugate distribution of the binomial
+distribution. The instantiation of Thompson sampling for the Bernoulli bandit is given in algorithm
+2. It is straightforward to adapt the algorithm to the case wh ere different arms use different Beta
+distributions as their priors.
+Algorithm 2 Thompson sampling for the Bernoulli bandit
+Require: α, β prior parameters of a Beta distribution
+Si = 0, Fi = 0, ∀i. {Success and failure counters}
+for t = 1, . . . , T do
+for i = 1, . . . , K do
+Draw θi according to Beta(Si + α, Fi + β).
+end for
+Draw arm ˆı = arg maxi θi and observe reward r
+if r = 1 then
+Sˆı = Sˆı + 1
+else
+Fˆı = Fˆı + 1
+end if
+end for
+3 Simulations
+We present some simulation results with Thompson sampling for the Bernoulli bandit problem and
+compare them to the UCB algorithm. The reward probability of each of the K arms is modeled
+by a Beta distribution which is updated after an arm is select ed (see algorithm 2). The initial prior
+distribution is Beta(1,1).
+There are various variants of the UCB algorithm, but they all have in common that the conﬁdence
+parameter should increase over time. Speciﬁcally, we chose the arm for which the following upper
+2
+conﬁdence bound [8, page 278] is maximum:
+k
+m +
+√
+2 k
+m log 1
+δ
+m + 2 log 1
+δ
+m , δ =
+√
+1
+t , (1)
+where m is the number of times the arm has been selected and k its total reward. This is a tight
+upper conﬁdence bound derived from Chernoff’s bound.
+In this simulation, the best arm has a reward probability of 0.5 and the K − 1 other arms have a
+probability of 0.5 − ε. In order to speed up the computations, the parameters are only updated after
+every 100 iterations. The regret as a function of T for various settings is plotted in ﬁgure 1. An
+asymptotic lower bound has been established in [7] for the regret of a bandit algorithm:
+R(T ) ≥ log(T )
+[ K∑
+i=1
+p∗ − pi
+D(pi||p∗) + o(1)
+]
+, (2)
+where pi is the reward probability of the i-th arm, p∗ = max pi and D is the Kullback-Leibler
+divergence. This lower bound is logarithmic in T with a constant depending on the pi values. The
+plots in ﬁgure 1 show that the regrets are indeed logarithmic in T (the linear trend on the right hand
+side) and it turns out that the observed constants (slope of the lines) are close to the optimal constants
+given by the lower bound (2). Note that the offset of the red cu rve is irrelevant because of the o(1)
+term in the lower bound (2). In fact, the red curves were shift ed such that they pass through the
+lower left-hand corner of the plot.
+Figure 1: Cumulative regret for K ∈ {10, 100}and ε ∈ {0.02, 0.1}. The plots are averaged over
+100 repetitions. The red line is the lower bound (2) shifted such that it goes through the origin.
+As with any Bayesian algorithm, one can wonder about the robu stness of Thompson sampling to
+prior mismatch. The results in ﬁgure 1 include already some prior mismatch because the Beta prior
+with parameters (1,1) has a large variance while the true pro babilities were selected to be close to
+3
+Figure 2: Regret of optimistic Thompson sampling [11] in the same setting as the lower left plot of
+ﬁgure 1.
+0.5. We have also done some other simulations (not shown) whe re there is a mismatch in the prior
+mean. In particular, when the reward probability of the best arm is 0.1 and the 9 others have a
+probability of 0.08, Thompson sampling—with the same prior as before—is still better than UCB
+and is still asymptotically optimal.
+We can thus conclude that in these simulations, Thompson sam pling is asymptotically optimal and
+achieves a smaller regret than the popular UCB algorithm. It is important to note that for UCB,
+the conﬁdence bound (1) is tight; we have tried some other con ﬁdence bounds, including the one
+originally proposed in [3], but they resulted in larger regrets.
+Optimistic Thompson sampling The intuition behind UCB and Thompson sampling is that, for
+the purpose of exploration, it is beneﬁcial to boost the predictions of actions for which we are uncer-
+tain. But Thompson sampling modiﬁes the predictions in both directions and there is apparently no
+beneﬁt in decreasing a prediction. This observation led to a recently proposed algorithm called Op-
+timistic Bayesian sampling [11] in which the modiﬁed score is never smaller than the mean . More
+precisely, in algorithm 1, Er(r|xt, a, θt) is replaced by max(Er(r|xt, a, θt), Er,θ|D(r|xt, a, θ)).
+Simulations in [12] showed some gains using this optimistic version of Thompson sampling. We
+compared in ﬁgure 2 the two versions of Thompson sampling in t he case K = 10 and ε = 0 .02.
+Optimistic Thompson sampling achieves a slightly better re gret, but the gain is marginal. A pos-
+sible explanation is that when the number of arms is large, it is likely that, in standard Thompson
+sampling, the selected arm has a already a boosted score.
+Posterior reshaping Thompson sampling is a heuristic advocating to draw samplesfrom the pos-
+terior, but one might consider changing that heuristic to draw samples from a modiﬁed distribution.
+In particular, sharpening the posterior would have the effect of increasing exploitation while widen-
+ing it would favor exploration. In our simulations, the post erior is a Beta distribution with parame-
+ters a and b, and we have tried to change it to parameters a/α, b/α. Doing so does not change the
+posterior mean, but multiply its variance by a factor close to α2.
+Figure 3 shows the average and distribution of regret for dif ferent values of α. Values of α smaller
+than 1 decrease the amount of exploration and often result in lower regret. But the price to pay is a
+higher variance: in some runs, the regret is very large. The a verage regret is asymptotically not as
+good as with α = 1, but tends to be better in the non-asymptotic regime.
+Impact of delay In a real world system, the feedback is typically not process ed immediately
+because of various runtime constraints. Instead it usually arrives in batches over a certain period of
+time. We now try to quantify the impact of this delay by doing s ome simulations that mimic the
+problem of news articles recommendation [9] that will be described in section 5.
+4
+Figure 3: Thompson sampling where the parameters of the Beta posterior distribution have been
+divided by α. The setting is the same as in the lower left plot of ﬁgure 1 (10 00 repetitions). Left:
+average regret as a function ofT . Right: distribution of the regret at T = 10 7. Since the outliers can
+take extreme values, those above 6000 are compressed at the top of the ﬁgure.
+Table 1: Inﬂuence of the delay: regret when the feedback is provided every δ steps.
+δ 1 3 10 32 100 316 1000
+UCB 24,145 24,695 25,662 28,148 37,141 77,687 226,220
+TS 9,105 9,199 9,049 9,451 11,550 21,594 59,256
+Ratio 2.65 2.68 2.84 2.98 3.22 3.60 3.82
+We consider a dynamic set of 10 items. At a given time, with probability 10− 3 one of the item retires
+and is replaced by a new one. The true reward probability of a g iven item is drawn according to a
+Beta(4,4) distribution. The feedback is received only every δ time units. Table 1 shows the average
+regret (over 100 repetitions) of Thompson sampling and UCB a t T = 10 6. An interesting quantity
+in this simulation is the relative regret of UCB and Thompson sampling. It appears that Thompson
+sampling is more robust than UCB when the delay is long. Thomp son sampling alleviates the
+inﬂuence of delayed feedback by randomizing over actions; on the other hand, UCB is deterministic
+and suffers a larger regret in case of a sub-optimal choice.
+4 Display Advertising
+We now consider an online advertising application. Given a u ser visiting a publisher page, the
+problem is to select the best advertisement for that user. A key element in this matching problem is
+the click-through rate (CTR) estimation: what is the probability that a given ad will be clicked given
+some context (user, page visited)? Indeed, in a cost-per-cl ick (CPC) campaign, the advertiser only
+pays when his ad gets clicked. This is the reason why it is impo rtant to select ads with high CTRs.
+There is of course a fundamental exploration / exploitation dilemma here: in order to learn the CTR
+of an ad, it needs to be displayed, leading to a potential loss of short-term revenue. More details on
+on display advertising and the data used for modeling can be found in [1].
+In this paper, we consider standard regularized logistic re gression for predicting CTR. There are
+several features representing the user, page, ad, as well as conjunctions of these features. Some
+of the features include identiﬁers of the ad, advertiser, pu blisher and visited page. These features
+are hashed [17] and each training sample ends up being repres ented as sparse binary vector of
+dimension 224.
+In our model, the posterior distribution on the weights is ap proximated by a Gaussian distribution
+with diagonal covariance matrix. As in the Laplace approxim ation, the mean of this distribution is
+the mode of the posterior and the inverse variance of each weight is given by the curvature. The use
+5
+of this convenient approximation of the posterior is twofold. It ﬁrst serves as a prior on the weights
+to update the model when a new batch of training data becomes available, as described in algorithm
+3. And it is also the distribution used in Thompson sampling.
+Algorithm 3 Regularized logistic regression with batch updates
+Require: Regularization parameter λ > 0.
+mi = 0, q i = λ. {Each weight wi has an independent prior N (mi, q− 1
+i )}
+for t = 1, . . . , T do
+Get a new batch of training data (xj , yj), j = 1, . . . , n.
+Find w as the minimizer of: 1
+2
+d∑
+i=1
+qi(wi − mi)2 +
+n∑
+j=1
+log(1 + exp(− yjw⊤ xj)).
+mi = wi
+qi = qi +
+n∑
+j=1
+x2
+ijpj(1 − pj), p j = (1 + exp( − w⊤ xj ))− 1 {Laplace approximation}
+end for
+Evaluating an explore / exploit policy is difﬁcult because we typically do not know the reward of an
+action that was not chosen. A possible solution, as we shall s ee in section 5, is to use a replayer in
+which previous, randomized exploration data can be used to p roduce an unbiased ofﬂine estimator
+of the new policy [10]. Unfortunately, their approach canno t be used in our case here because
+it reduces the effective data size substantially when the nu mber of arms K is large, yielding too
+high variance in the evaluation results. [15] studies anoth er promising approach using the idea of
+importance weighting, but the method applies only when the p olicy is static, which is not the case
+for online bandit algorithms that constantly adapt to its history.
+For the sake of simplicity, therefore, we considered in this section a simulated environment. More
+precisely, the context and the ads are real, but the clicks ar e simulated using a weight vector w∗.
+This weight vector could have been chosen arbitrarily, but it was in fact a perturbed version of some
+weight vector learned from real clicks. The input feature ve ctors x are thus as in the real world set-
+ting, but the clicks are artiﬁcially generated with probability P (y = 1|x) = (1 + exp( − w∗⊤ x))− 1.
+About 13,000 contexts, representing a small random subset o f the total trafﬁc, are presented every
+hour to the policy which has to choose an ad among a set of eligible ads. The number of eligible ads
+for each context depends on numerous constraints set by the a dvertiser and the publisher. It varies
+between 5,910 and 1 with a mean of 1,364 and a median of 514 (over a set of 66,373 ads). Note that
+in this experiment, the number of eligible ads is smaller tha n what we would observe in live trafﬁc
+because we restricted the set of advertisers.
+The model is updated every hour as described in algorithm 3. A feature vector is constructed for
+every (context, ad) pair and the policy decides which ad to show. A click for that ad is then generated
+with probability (1 + exp(− w∗⊤ x))− 1. This labeled training sample is then used at the end of the
+hour to update the model. The total number of clicks received during this one hour period is the
+reward. But in order to eliminate unnecessary variance in th e estimation, we instead computed the
+expectation of that number since the click probabilities are known.
+Several explore / exploit strategies are compared; they only differ in the way the ads are selected; all
+the rest, including the model updates, is identical as described in algorithm 3. These strategies are:
+Thompson sampling This is algorithm 1 where each weight is drawn independently according to
+its Gaussian posterior approximation N (mi, q− 1
+i ) (see algorithm 3). As in section 3, we
+also consider a variant in which the standard deviationsq− 1/2
+i are ﬁrst multiplied by a factor
+α ∈ {0.25, 0.5}. This favors exploitation over exploration.
+LinUCB This is an extension of the UCB algorithm to the parametric ca se [9]. It selects the
+ad based on mean and standard deviation. It also has a factor α to control the ex-
+ploration / exploitation trade-off. More precisely, LinUC B selects the ad for which
+∑d
+i=1 mixi + α
+√
+∑d
+i=1 q− 1
+i x2
+i is maximum.
+Exploit-only Select the ad with the highest mean.
+Random Select the ad uniformly at random.
+6
+Table 2: CTR regrets on the display advertising data.
+Method TS LinUCB ε-greedy Exploit Random
+Parameter 0.25 0.5 1 0.5 1 2 0.005 0.01 0.02
+Regret (%) 4.45 3.72 3.81 4.99 4.22 4.14 5.05 4.98 5.22 5.00 31.95
+Figure 4: CTR regret over the 4 days test period for 3 algorithms: Thompson sampling with α = 0.5,
+LinUCB with α = 2 , Exploit-only. The regret in the ﬁrst hour is large, around 0 .3, because the
+algorithms predict randomly (no initial model provided).
+ε-greedy Mix between exploitation and random: with ε probability, select a random ad; otherwise,
+select the one with the highest mean.
+Results A preliminary result is about the quality of the variance prediction. The diagonal Gaussian
+approximation of the posterior does not seem to harm the vari ance predictions. In particular, they
+are very well calibrated: when constructing a 95% conﬁdence interval for CTR, the true CTR is in
+this interval 95.1% of the time.
+The regrets of the different explore / exploit strategies can be found in table 2. Thompson sampling
+achieves the best regret and interestingly the modiﬁed vers ion with α = 0 .5 gives slightly better
+results than the standard version (α = 1). This conﬁrms the results of the previous section (ﬁgure 3)
+where α < 1 yielded better regrets in the non-asymptotic regime.
+Exploit-only does pretty well, at least compared to random s election. This seems at ﬁrst a bit sur-
+prising given that the system has no prior knowledge about the CTRs. A possible explanation is that
+the change in context induces some exploration, as noted in [ 13]. Also, the fact that exploit-only
+is so much better than random might explain why ε-greedy does not beat it: whenever this strat-
+egy chooses a random action, it suffers a large regret in aver age which is not compensated by its
+exploration beneﬁt.
+Finally ﬁgure 4 shows the regret of three algorithms across t ime. As expected, the regret has a
+decreasing trend over time.
+5 News Article Recommendation
+In this section, we consider another application of Thompson sampling in personalized news article
+recommendation on Yahoo! front page [2, 9]. Each time a user v isits the portal, a news article out
+of a small pool of hand-picked candidates is recommended. Th e candidate pool is dynamic: old
+articles may retire and new articles may be added in. The aver age size of the pool is around 20.
+The goal is to choose the most interesting article to users, or formally, maximize the total number of
+clicks on the recommended articles. In this case, we treat ar ticles as arms, and deﬁne the payoff to
+be 1 if the article is clicked on and 0 otherwise. Therefore, the average per-trial payoff of a policy is
+its overall CTR.
+7
+Figure 5: Normalized CTRs of various algorithm on the news article recommendation data with dif-
+ferent update delays: {10, 30, 60}minutes. The normalization is with respect to a random baseline.
+Each user was associated with a binary raw feature vector of over 1000 dimension, which indicates
+information of the user like age, gender, geographical loca tion, behavioral targeting, etc. These
+features are typically sparse, so using them directly makes learning more difﬁcult and is compu-
+tationally expensive. One can ﬁnd lower dimension feature s ubspace by, say, following previous
+practice [9]. Here, we adopted the simpler principal compon ent analysis (PCA), which did not ap-
+pear to affect the bandit algorithms much in our experience. In particular, we performed a PCA and
+projected the raw user feature onto the ﬁrst 20 principal components. Finally, a constant feature 1 is
+appended, so that the ﬁnal user feature contains 21 components. The constant feature serves as the
+bias term in the CTR model described next.
+We use logistic regression, as in Algorithm 3, to model artic le CTRs: given a user feature vector
+x ∈ ℜ 21, the probability of click on an article a is (1 + exp(− x⊤ wa))− 1 for some weight vector
+wa ∈ ℜ 21 to be learned. The same parameter algorithm and exploration heuristics are applied as in
+the previous section. Note that we have a different weight vector for each article, which is affordable
+as the numbers of articles and features are both small. Furth ermore, given the size of data, we have
+not found article features to be helpful. Indeed, it is shown in our previous work [9, Figure 5] that
+article features are helpful in this domain only when data are highly sparse.
+Given the small size of candidate pool, we adopt the unbiased ofﬂine evaluation method of [10]
+to compare various bandit algorithms. In particular, we col lected randomized serving events for
+a random fraction of user visits; in other words, these rando m users were recommended an article
+chosen uniformly from the candidate pool. From 7 days in June2009, over 34M randomized serving
+events were obtained.
+As in section 3, we varied the update delay to study how variou s algorithms degrade. Three values
+were tried: 10, 30, and 60 minutes. Figure 5 summarizes the ov erall CTRs of four families of
+algorithm together with the exploit-only baseline. As in the previous section, (optimistic) Thompson
+sampling appears competitive across all delays. While the deterministic UCB works well with short
+delay, its performance drops signiﬁcantly as the delay increases. In contrast, randomized algorithms
+are more robust to delay, and when there is a one-hour delay, ( optimistic) Thompson sampling is
+signiﬁcant better than others (given the size of our data).
+6 Conclusion
+The extensive experimental evaluation carried out in this paper reveals that Thompson sampling is a
+very effective heuristic for addressing the exploration / e xploitation trade-off. In its simplest form,
+it does not have any parameter to tune, but our results show th at tweaking the posterior to reduce
+exploration can be beneﬁcial. In any case, Thompson sampling is very easy to implement and should
+thus be considered as a standard baseline. Also, since it is arandomized algorithm, it is robust in the
+case of delayed feedback.
+Future work includes of course, a theoretical analysis of it s ﬁnite-time regret. The beneﬁt of this
+analysis would be twofold. First, it would hopefully contri bute to make Thompson sampling as
+popular as other algorithms for which regret bounds exist. S econd, it could provide guidance on
+tweaking the posterior in order to achieve a smaller regret.
+8
+References
+[1] D. Agarwal, R. Agrawal, R. Khanna, and N. Kota. Estimating rates of rare events with multiple
+hierarchies through scalable log-linear models. In Proceedings of the 16th ACM SIGKDD
+international conference on Knowledge discovery and data mining, pages 213–222, 2010.
+[2] Deepak Agarwal, Bee-Chung Chen, Pradheep Elango, Nitin Motgi, Seung-Taek Park, Raghu
+Ramakrishnan, Scott Roy, and Joe Zachariah. Online models f or content optimization. In
+Advances in Neural Information Processing Systems 21, pages 17–24, 2008.
+[3] P. Auer, N. Cesa-Bianchi, and P. Fischer. Finite-time an alysis of the multiarmed bandit prob-
+lem. Machine learning, 47(2):235–256, 2002.
+[4] John C. Gittins. Multi-armed Bandit Allocation Indices. Wiley Interscience Series in Systems
+and Optimization. John Wiley & Sons Inc, 1989.
+[5] Thore Graepel, Joaquin Quinonero Candela, Thomas Borch ert, and Ralf Herbrich. Web-scale
+Bayesian click-through rate prediction for sponsored sear ch advertising in Microsoft’s Bing
+search engine. In Proceedings of the Twenty-Seventh International Conferen ce on Machine
+Learning (ICML-10), pages 13–20, 2010.
+[6] O.-C. Granmo. Solving two-armed bernoulli bandit probl ems using a bayesian learning au-
+tomaton. International Journal of Intelligent Computing and Cybernetics, 3(2):207–234, 2010.
+[7] T.L. Lai and H. Robbins. Asymptotically efﬁcient adapti ve allocation rules. Advances in
+applied mathematics, 6:4–22, 1985.
+[8] J. Langford. Tutorial on practical prediction theory fo r classiﬁcation. Journal of Machine
+Learning Research, 6(1):273–306, 2005.
+[9] L. Li, W. Chu, J. Langford, and R. E. Schapire. A contextua l-bandit approach to personalized
+news article recommendation. In Proceedings of the 19th international conference on World
+wide web, pages 661–670, 2010.
+[10] L. Li, W. Chu, J. Langford, and X. Wang. Unbiased ofﬂine e valuation of contextual-bandit-
+based news article recommendation algorithms. In Proceedings of the fourth ACM interna-
+tional conference on Web search and data mining, pages 297–306, 2011.
+[11] Benedict C. May, Nathan Korda, Anthony Lee, and David S. Leslie. Optimistic Bayesian
+sampling in contextual-bandit problems. Technical Report11:01, Statistics Group, Department
+of Mathematics, University of Bristol, 2011. Submitted to the Annals of Applied Probability.
+[12] Benedict C. May and David S. Leslie. Simulation studies in optimistic Bayesian sampling in
+contextual-bandit problems. Technical Report 11:02, Stat istics Group, Department of Mathe-
+matics, University of Bristol, 2011.
+[13] J. Sarkar. One-armed bandit problems with covariates. The Annals of Statistics, 19(4):1978–
+2002, 1991.
+[14] S. Scott. A modern bayesian look at the multi-armed band it. Applied Stochastic Models in
+Business and Industry, 26:639–658, 2010.
+[15] Alexander L. Strehl, John Langford, Lihong Li, and Sham M. Kakade. Learning from logged
+implicit exploration data. In Advances in Neural Information Processing Systems 23 (NIPS -
+10), pages 2217–2225, 2011.
+[16] William R. Thompson. On the likelihood that one unknown probability exceeds another in
+view of the evidence of two samples. Biometrika, 25(3–4):285–294, 1933.
+[17] K. Weinberger, A. Dasgupta, J. Attenberg, J. Langford, and A. Smola. Feature hashing for
+large scale multitask learning. In ICML, 2009.
+9
