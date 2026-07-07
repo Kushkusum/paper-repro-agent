@@ -3,8 +3,10 @@ from __future__ import annotations
 import json
 import os
 import re
-from typing import TypeVar
+import sys
+from typing import Any, TypeVar
 
+import groq
 from dotenv import load_dotenv
 from groq import Groq
 from pydantic import BaseModel, ValidationError
@@ -13,7 +15,18 @@ load_dotenv()
 
 T = TypeVar("T", bound=BaseModel)
 
-DEFAULT_MODEL = os.environ.get("GROQ_MODEL", "meta-llama/llama-4-scout-17b-16e-instruct")
+DEFAULT_MODEL = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
+
+# Free-tier Groq models each have their own separate rate-limit bucket (tokens/minute and
+# tokens/day). If the preferred model is rate-limited or a request is too large for its
+# per-minute cap, fall back to the next model here rather than crashing the whole run.
+DEFAULT_FALLBACKS = [
+    "llama-3.3-70b-versatile",
+    "meta-llama/llama-4-scout-17b-16e-instruct",
+    "llama-3.1-8b-instant",
+]
+_fallbacks_env = os.environ.get("GROQ_MODEL_FALLBACKS")
+MODEL_FALLBACKS = [m.strip() for m in _fallbacks_env.split(",")] if _fallbacks_env else DEFAULT_FALLBACKS
 
 _client: Groq | None = None
 
@@ -28,6 +41,21 @@ def client() -> Groq:
             )
         _client = Groq(api_key=api_key)
     return _client
+
+
+def _model_chain(preferred: str) -> list[str]:
+    return [preferred] + [m for m in MODEL_FALLBACKS if m != preferred]
+
+
+def _create_completion(preferred_model: str, **kwargs: Any):
+    last_error: Exception | None = None
+    for model in _model_chain(preferred_model):
+        try:
+            return client().chat.completions.create(model=model, **kwargs), model
+        except groq.APIStatusError as e:
+            last_error = e
+            print(f"[llm] {model} unavailable ({e.__class__.__name__}), trying next fallback model...", file=sys.stderr)
+    raise RuntimeError(f"All models in fallback chain failed. Last error: {last_error}") from last_error
 
 
 def _extract_json(text: str) -> dict:
@@ -45,8 +73,8 @@ def call_text(
     temperature: float = 0.2,
     max_tokens: int | None = None,
 ) -> str:
-    resp = client().chat.completions.create(
-        model=model,
+    resp, _ = _create_completion(
+        model,
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
@@ -77,8 +105,8 @@ def call_structured(
     ]
     last_error = ""
     for attempt in range(max_retries):
-        resp = client().chat.completions.create(
-            model=model,
+        resp, _ = _create_completion(
+            model,
             messages=messages,
             temperature=temperature,
             response_format={"type": "json_object"},

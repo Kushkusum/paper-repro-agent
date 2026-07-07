@@ -16,6 +16,12 @@ paper text --> extractor (LLM) --> PaperSpec (method, setup, target metrics)
 The LLM "brain" is a free-tier hosted model via [Groq](https://console.groq.com) (open-weight models
 like Llama 3.3 70B), so there is no per-token billing beyond Groq's free tier.
 
+Groq's free tier gives each model its own separate rate-limit bucket (tokens/minute and
+tokens/day). If the preferred model (`GROQ_MODEL`, default `llama-3.3-70b-versatile`) is rate-limited
+or a request is too large for its per-minute cap, `agent/llm.py` automatically falls back to the next
+model in `GROQ_MODEL_FALLBACKS` (comma-separated env var; defaults to `llama-3.3-70b-versatile,
+meta-llama/llama-4-scout-17b-16e-instruct, llama-3.1-8b-instant`) rather than crashing the run.
+
 ## Setup
 
 1. `pip install -r requirements.txt`
