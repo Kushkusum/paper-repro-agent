@@ -24,6 +24,19 @@ def render_markdown(report: ReproductionReport) -> str:
     for a in report.spec.assumptions:
         lines.append(f"- {a}")
 
+    if report.feasibility is not None:
+        lines += [
+            "",
+            "## Feasibility Assessment",
+            "",
+            f"**Verdict:** {report.feasibility.verdict}",
+            "",
+            report.feasibility.reasoning,
+        ]
+
+    if report.plan is None:
+        return "\n".join(lines)
+
     lines += ["", "## Implementation Plan", "", report.plan.approach, ""]
 
     lines += ["## Iterations", ""]

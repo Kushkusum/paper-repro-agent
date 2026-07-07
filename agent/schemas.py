@@ -57,6 +57,19 @@ class PaperSpec(BaseModel):
         return self
 
 
+class FeasibilityAssessment(BaseModel):
+    feasible: bool
+    verdict: Literal[
+        "feasible",
+        "infeasible_needs_gpu",
+        "infeasible_private_data",
+        "infeasible_needs_internet",
+        "infeasible_unsupported_framework",
+        "infeasible_other",
+    ]
+    reasoning: str = Field(description="Concrete explanation citing what the paper needs vs. what the sandbox has")
+
+
 class ImplementationPlan(BaseModel):
     approach: str = Field(description="High-level plan for implementing the method")
     modules: list[str] = Field(description="Files/functions to write")
@@ -119,7 +132,8 @@ class IterationRecord(BaseModel):
 class ReproductionReport(BaseModel):
     paper_title: str
     spec: PaperSpec
-    plan: ImplementationPlan
-    iterations: list[IterationRecord]
+    feasibility: FeasibilityAssessment | None = None
+    plan: ImplementationPlan | None = None
+    iterations: list[IterationRecord] = Field(default_factory=list)
     final_verdict: str
     final_reasoning: str

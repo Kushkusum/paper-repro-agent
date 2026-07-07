@@ -8,8 +8,10 @@ from . import coder, sandbox
 from .diagnostic import diagnose
 from .evaluator import evaluate
 from .extractor import extract_spec
+from .feasibility import assess_feasibility
 from .planner import draft_plan
-from .schemas import IterationRecord, ReproductionReport
+from .report import write_report
+from .schemas import FeasibilityAssessment, IterationRecord, ReproductionReport
 
 RUNS_DIR = Path(__file__).resolve().parent.parent / "runs"
 
@@ -31,21 +33,39 @@ def run_pipeline(
     run_dir.mkdir(parents=True, exist_ok=True)
 
     paper_text = paper_path.read_text(encoding="utf-8")
+    feasibility: FeasibilityAssessment | None = None
 
     try:
-        log("[1/5] Extracting structured spec from paper...")
+        log("[1/6] Extracting structured spec from paper...")
         spec = extract_spec(paper_text, focus_hint)
         (run_dir / "spec.json").write_text(spec.model_dump_json(indent=2), encoding="utf-8")
         log(f"  -> {len(spec.target_metrics)} target metric(s): {[m.name for m in spec.target_metrics]}")
 
-        log("[2/5] Drafting implementation plan...")
+        log("[2/6] Assessing feasibility within sandbox constraints...")
+        feasibility = assess_feasibility(spec)
+        (run_dir / "feasibility.json").write_text(feasibility.model_dump_json(indent=2), encoding="utf-8")
+        log(f"  -> verdict={feasibility.verdict}")
+        if not feasibility.feasible:
+            log("  -> infeasible: stopping before planning/coding to avoid wasted iterations.")
+            report = ReproductionReport(
+                paper_title=paper_title,
+                spec=spec,
+                feasibility=feasibility,
+                final_verdict=feasibility.verdict,
+                final_reasoning=feasibility.reasoning,
+            )
+            report_path = write_report(report, run_dir)
+            log(f"Done. Report: {report_path}")
+            return report_path
+
+        log("[3/6] Drafting implementation plan...")
         plan = draft_plan(spec)
         (run_dir / "plan.json").write_text(plan.model_dump_json(indent=2), encoding="utf-8")
 
-        log("[3/5] Generating code...")
+        log("[4/6] Generating code...")
         code = coder.generate_code(plan, spec)
     except Exception as e:
-        log(f"Aborted before any sandbox iteration ran (extraction/planning/coding stage): {e}")
+        log(f"Aborted before any sandbox iteration ran (extraction/feasibility/planning/coding stage): {e}")
         raise
 
     iterations: list[IterationRecord] = []
@@ -54,7 +74,7 @@ def run_pipeline(
 
     for i in range(1, max_iterations + 1):
         try:
-            log(f"[4/5] Iteration {i}/{max_iterations}: running in sandbox...")
+            log(f"[5/6] Iteration {i}/{max_iterations}: running in sandbox...")
             iter_dir = run_dir / f"iteration_{i}"
             result = sandbox.run_code(code, iter_dir)
             log(f"  -> exit_code={result.exit_code}, metrics={result.parsed_metrics}")
@@ -101,12 +121,12 @@ def run_pipeline(
             )
             break
 
-    log("[5/5] Writing report...")
-    from .report import write_report
+    log("[6/6] Writing report...")
 
     report = ReproductionReport(
         paper_title=paper_title,
         spec=spec,
+        feasibility=feasibility,
         plan=plan,
         iterations=iterations,
         final_verdict=final_verdict,
