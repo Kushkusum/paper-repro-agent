@@ -458,8 +458,8 @@ footer .colophon a:focus-visible {
       it wasn't a hardcoded shortcut.
     </p>
     <div class="stat-row">
-      <span class="stat-chip good"><span class="n">2</span> reproduced</span>
-      <span class="stat-chip warn"><span class="n">2</span> unresolved</span>
+      <span class="stat-chip good"><span class="n">3</span> reproduced</span>
+      <span class="stat-chip warn"><span class="n">1</span> unresolved</span>
       <span class="stat-chip muted"><span class="n">1</span> infeasible</span>
       <span class="stat-chip"><span class="n">4</span> papers</span>
     </div>
@@ -504,7 +504,7 @@ footer .colophon a:focus-visible {
         <div class="record-head">
           <div>
             <p class="record-label">Full delay sweep (δ ∈ {1, 3, 10, 32, 100, 316, 1000})</p>
-            <p class="record-meta">2 attempts, 6 iterations each</p>
+            <p class="record-meta">3 attempts, 6 iterations each</p>
           </div>
           <span class="pill warn">unresolved</span>
         </div>
@@ -521,10 +521,12 @@ footer .colophon a:focus-visible {
           <summary>why this didn't converge</summary>
           <p>The paper's central claim here is that the UCB/TS regret ratio <em>grows</em>
           with feedback delay. The reproduced ratios stayed flat or went negative instead of
-          climbing — the free coding model never correctly implemented batched, delayed
-          statistics updates; it kept computing standard immediate-feedback Thompson
-          Sampling regardless of δ. Diagnosed correctly as a bug both times, not
-          misreported as success.</p>
+          climbing, even on a third attempt with explicit step-by-step pseudocode for the
+          batched-update mechanism and a reduced 3-point sweep. The free coding model
+          consistently fails to implement delayed, batched statistics updates — it keeps
+          computing standard immediate-feedback Thompson Sampling regardless of δ. Diagnosed
+          correctly as a bug every time, never misreported as success; this is a genuine
+          capability ceiling of the current model, not a prompting gap.</p>
         </details>
       </div>
     </div>
@@ -537,29 +539,32 @@ footer .colophon a:focus-visible {
         <div class="record-head">
           <div>
             <p class="record-label">Empirical regret vs. Theorem 1's closed-form bound</p>
-            <p class="record-meta">6 iterations</p>
+            <p class="record-meta">1 iteration (on retry)</p>
           </div>
-          <span class="pill warn">unresolved</span>
+          <span class="pill good">reproduced</span>
         </div>
         <div class="metrics-wrap">
           <table class="metrics">
-            <tr><th>metric</th><th>bound</th><th>observed</th><th>error</th></tr>
+            <tr><th>metric</th><th>bound</th><th>observed</th><th>note</th></tr>
             <tr>
-              <td class="name">ucb1_regret_bound</td>
-              <td class="num">308.30</td>
-              <td class="num">308.30</td>
-              <td class="num err ok">0.0005%</td>
+              <td class="name">ucb1_regret</td>
+              <td class="num">≤ 308.30</td>
+              <td class="num">22.47</td>
+              <td class="num err ok">well under bound</td>
             </tr>
           </table>
         </div>
         <details class="reasoning">
-          <summary>why a numeric match still failed</summary>
-          <p>The number lined up almost exactly with the theorem's bound — because the code
+          <summary>a fake pass came first — here's the difference</summary>
+          <p>The first attempt "matched" almost exactly (308.30 vs. 308.30) — because the code
           computed the bound formula directly and reported <em>that</em>, instead of running
           UCB1 and measuring its actual simulated regret. A second, skeptical review pass
           caught the pass-through and rejected it every time it recurred, across six patch
-          attempts. This is the exact failure mode a naive "does the number match" check
-          would have missed.</p>
+          attempts, correctly refusing to call it reproduced. On a later retry, the generated
+          code ran an honest UCB1 simulation — index formula, per-round reward accumulation,
+          the works — and its real empirical regret landed at 22.47, comfortably under the
+          theorem's bound, with no reference to the bound formula anywhere in the reporting
+          step. That is what a genuine reproduction of a proven guarantee looks like.</p>
         </details>
       </div>
     </div>
