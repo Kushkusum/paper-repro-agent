@@ -53,6 +53,16 @@ can't reproduce what it can't obtain. For the included Thompson Sampling paper, 
 bandit simulations (Figure 1, Table 1) are self-contained; Sections 4-5 use private Yahoo! ad/news
 click data and are not reproducible from the paper alone.
 
+## Testing
+
+`pip install -r requirements-dev.txt && python -m pytest tests/ -v`
+
+Covers the pipeline's own logic (parsing, evaluator comparison modes, model-fallback chain,
+leaderboard aggregation) without needing an API key or Docker — all LLM/sandbox calls are mocked or
+avoided. Not covered by tests: anything that requires a live Groq call or a real Docker container
+(extraction, planning, code generation quality, actual sandboxed execution) — those are only
+verified by running the pipeline end-to-end on real papers.
+
 ## Safety notes
 
 - Sandbox runs with `--network none`, memory/CPU/pid limits, a wall-clock timeout, and a named

@@ -84,9 +84,12 @@ def _parse_generated_code(raw: str) -> GeneratedCode:
         start = h.end()
         end = headers[i + 1].start() if i + 1 < len(headers) else len(raw)
         content = raw[start:end]
-        content = re.sub(r"###\s*ENDFILE\s*$", "", content, flags=re.DOTALL).strip("\n")
-        # Truncate at the metadata footer if it landed inside the last file's span.
+        # Truncate at the metadata footer first (only present after the LAST file's span) —
+        # ENDFILE isn't at the true end of that span until the footer is removed, so this
+        # order matters: doing it the other way round left a stray "### ENDFILE" line in the
+        # last file's content (harmless in Python since '#' is a comment, but still wrong).
         content = re.split(r"\n###\s*ENTRYPOINT:", content)[0]
+        content = re.sub(r"###\s*ENDFILE\s*$", "", content, flags=re.DOTALL).strip("\n")
         content = _strip_code_fence(content.strip("\n"))
         files.append(CodeArtifact(filename=filename, content=content))
     if not files:
