@@ -144,7 +144,7 @@ def call_structured(
         {"role": "user", "content": user_prompt},
     ]
     last_error = ""
-    for attempt in range(max_retries):
+    for _attempt in range(max_retries):
         resp, _ = _create_completion(
             model,
             messages=messages,

@@ -28,9 +28,12 @@ def _write_report(run_dir: Path, paper_title: str, metric_name: str, verdict: st
             relative_error_pct=0.0,
         )
     ]
+    sandbox_result = SandboxResult(
+        success=True, stdout="", stderr="", exit_code=0, parsed_metrics={metric_name: 1.0}
+    )
     iteration = IterationRecord(
         iteration=1,
-        sandbox_result=SandboxResult(success=True, stdout="", stderr="", exit_code=0, parsed_metrics={metric_name: 1.0}),
+        sandbox_result=sandbox_result,
         evaluation=EvaluationResult(all_within_tolerance=True, comparisons=comparisons),
     )
     report = ReproductionReport(

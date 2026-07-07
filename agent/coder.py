@@ -119,7 +119,7 @@ CODE_MAX_TOKENS = 6000
 def _generate_with_retry(user_prompt: str, max_retries: int = 3) -> GeneratedCode:
     messages_context = user_prompt
     last_error = ""
-    for attempt in range(max_retries):
+    for _attempt in range(max_retries):
         raw = call_text(SYSTEM_PROMPT, messages_context, temperature=0.2, max_tokens=CODE_MAX_TOKENS)
         try:
             return _parse_generated_code(raw)

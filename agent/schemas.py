@@ -45,7 +45,7 @@ class PaperSpec(BaseModel):
     )
 
     @model_validator(mode="after")
-    def _unique_metric_names(self) -> "PaperSpec":
+    def _unique_metric_names(self) -> PaperSpec:
         names = [m.name for m in self.target_metrics]
         if len(names) != len(set(names)):
             dupes = sorted({n for n in names if names.count(n) > 1})

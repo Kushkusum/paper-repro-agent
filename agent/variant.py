@@ -27,7 +27,9 @@ method is correct. Do not propose something that would require new metrics — i
 against the same metric(s) already being measured.
 """
 
-IMPLEMENT_SYSTEM_PROMPT = "You are a precise research engineer modifying existing reproduction code to test one variant."
+IMPLEMENT_SYSTEM_PROMPT = (
+    "You are a precise research engineer modifying existing reproduction code to test one variant."
+)
 
 VARIANT_FORMAT_INSTRUCTIONS = """Output the COMPLETE modified code (all files, in full) implementing \
 the described variant, in this exact delimited format, nothing else:
@@ -75,7 +77,9 @@ def implement_variant(code: GeneratedCode, proposal: VariantProposal) -> Generat
     return _generate_with_retry(user_prompt)
 
 
-def analyze_variant(proposal: VariantProposal, baseline_metrics: dict[str, float], variant_metrics: dict[str, float]) -> tuple[bool, str]:
+def analyze_variant(
+    proposal: VariantProposal, baseline_metrics: dict[str, float], variant_metrics: dict[str, float]
+) -> tuple[bool, str]:
     user_prompt = (
         f"PREDICTION: the metric(s) should {proposal.predicted_direction} — {proposal.predicted_effect}\n\n"
         f"BASELINE METRICS: {json.dumps(baseline_metrics, indent=2)}\n"

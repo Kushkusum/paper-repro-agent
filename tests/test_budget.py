@@ -2,7 +2,9 @@ import agent.llm as llm
 
 
 def test_reset_budget_clears_log():
-    llm._call_log.append({"model": "m", "prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2, "wall_time_sec": 0.1})
+    llm._call_log.append(
+        {"model": "m", "prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2, "wall_time_sec": 0.1}
+    )
     llm.reset_budget()
     summary = llm.get_budget_summary()
     assert summary.total_calls == 0

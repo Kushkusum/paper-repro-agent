@@ -77,13 +77,19 @@ the prediction failed and explained why, rather than just running the numbers.
 
 ## Testing
 
-`pip install -r requirements-dev.txt && python -m pytest tests/ -v`
+```bash
+pip install -r requirements-dev.txt
+python -m ruff check agent/ main.py leaderboard.py tests/   # lint
+python -m mypy agent/ main.py leaderboard.py                # type check
+python -m pytest tests/ -v                                  # tests
+```
 
-Covers the pipeline's own logic (parsing, evaluator comparison modes, model-fallback chain,
-leaderboard aggregation) without needing an API key or Docker — all LLM/sandbox calls are mocked or
-avoided. Not covered by tests: anything that requires a live Groq call or a real Docker container
-(extraction, planning, code generation quality, actual sandboxed execution) — those are only
-verified by running the pipeline end-to-end on real papers.
+All three run in CI on every push/PR (see the badge above). Tests cover the pipeline's own logic
+(parsing, evaluator comparison modes, model-fallback chain, leaderboard aggregation, budget
+tracking) without needing an API key or Docker — all LLM/sandbox calls are mocked or avoided. Not
+covered by tests: anything that requires a live Groq call or a real Docker container (extraction,
+planning, code generation quality, actual sandboxed execution) — those are only verified by running
+the pipeline end-to-end on real papers.
 
 ## Safety notes
 

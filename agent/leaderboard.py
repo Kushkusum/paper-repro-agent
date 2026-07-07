@@ -101,7 +101,9 @@ def render_markdown(summaries: list[RunSummary]) -> str:
             metrics_cell = "—"
         n = len(s.experiment_key)
         experiment_label = f"{n} metric{'s' if n != 1 else ''}: {', '.join(s.experiment_key)}"
-        lines.append(f"| {s.paper_title}<br><sub>{experiment_label}</sub> | {badge} | {metrics_cell} | {s.num_iterations} |")
+        lines.append(
+            f"| {s.paper_title}<br><sub>{experiment_label}</sub> | {badge} | {metrics_cell} | {s.num_iterations} |"
+        )
 
     lines += ["", "## Details", ""]
     for s in summaries:
