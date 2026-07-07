@@ -25,8 +25,15 @@ def evaluate(spec: PaperSpec, result: SandboxResult) -> EvaluationResult:
         if tm.reported_value == 0:
             rel_err = abs(observed) * 100
         else:
-            rel_err = abs(observed - tm.reported_value) / abs(tm.reported_value) * 100
-        within = rel_err <= tm.tolerance_pct
+            rel_err = (observed - tm.reported_value) / abs(tm.reported_value) * 100
+
+        if tm.comparison_type == "upper_bound":
+            # Below the bound is always fine; only exceeding it (beyond tolerance) is a mismatch.
+            within = rel_err <= tm.tolerance_pct
+            rel_err = abs(rel_err)
+        else:
+            rel_err = abs(rel_err)
+            within = rel_err <= tm.tolerance_pct
         all_ok = all_ok and within
         comparisons.append(
             MetricComparison(

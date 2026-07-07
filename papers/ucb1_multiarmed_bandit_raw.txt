@@ -1,0 +1,111 @@
+Finite-time Analysis of the Multiarmed Bandit Problem
+Peter Auer, Nicolo Cesa-Bianchi, Paul Fischer
+Machine Learning, 47, 235-256, 2002
+
+Abstract. Reinforcement learning policies face the exploration versus exploitation dilemma, i.e.
+the search for a balance between exploring the environment to find profitable actions while taking
+the empirically best action as often as possible. A popular measure of a policy's success in
+addressing this dilemma is the regret, that is the loss due to the fact that the globally optimal
+policy is not followed all the times. One of the simplest examples of the exploration/exploitation
+dilemma is the multi-armed bandit problem. Lai and Robbins were the first ones to show that the
+regret for this problem has to grow at least logarithmically in the number of plays. Since then,
+policies which asymptotically achieve this regret have been devised by Lai and Robbins and many
+others. In this work we show that the optimal logarithmic regret is also achievable uniformly over
+time, with simple and efficient policies, and for all reward distributions with bounded support.
+
+1. Introduction
+
+In its most basic formulation, a K-armed bandit problem is defined by random variables X_{i,n}
+for 1 <= i <= K and n >= 1, where each i is the index of a gambling machine (i.e., the "arm" of
+a bandit). Successive plays of machine i yield rewards X_{i,1}, X_{i,2}, ... which are independent
+and identically distributed according to an unknown law with unknown expectation mu_i.
+
+A policy, or allocation strategy, A is an algorithm that chooses the next machine to play based
+on the sequence of past plays and obtained rewards. Let T_i(n) be the number of times machine i
+has been played by A during the first n plays. Then the regret of A after n plays is defined by
+
+  mu* n - sum_{j=1}^{K} mu_j E[T_j(n)]   where mu* = max_{1<=i<=K} mu_i
+
+Throughout the paper we define Delta_i = mu* - mu_i.
+
+2. Main results
+
+Theorem 1. For all K > 1, if policy UCB1 is run on K machines having arbitrary reward
+distributions P_1, ..., P_K with support in [0, 1], then its expected regret after any number n
+of plays is at most
+
+  [ 8 * sum_{i: mu_i < mu*} (ln n) / Delta_i ]  +  (1 + pi^2 / 3) * sum_{j=1}^{K} Delta_j
+
+where mu_1, ..., mu_K are the expected values of P_1, ..., P_K.
+
+Deterministic policy UCB1:
+  Initialization: Play each machine once.
+  Loop:
+    - Play machine j that maximizes  xbar_j + sqrt( (2 ln n) / n_j )
+      where xbar_j is the average reward obtained from machine j, n_j is the number of times
+      machine j has been played so far, and n is the overall number of plays done so far.
+
+(Theorem 2 describes a more complex variant, UCB2, with a tighter constant; Theorem 3 describes
+a variant of the randomized epsilon-greedy heuristic, epsilon_n-GREEDY, with input parameters
+c > 0 and 0 < d < 1, where epsilon_n = min{1, cK/(d^2 n)}; Theorem 4 covers UCB1-NORMAL for
+normally-distributed rewards. These are not needed for the reduced-scale reproduction below.)
+
+4. Experiments
+
+For practical purposes, the bound of Theorem 1 can be tuned more finely using the sample
+variance of each machine (this variant is called UCB1-TUNED); it performs substantially better
+than UCB1 in essentially all of the paper's experiments, though no regret bound is proven for it.
+
+We compared the empirical behaviour of policies UCB1-TUNED, UCB2, and epsilon_n-GREEDY on
+Bernoulli reward distributions with different parameters shown in the table below. Rows 1-3
+define reward distributions for a 2-armed bandit problem, whereas rows 11-14 define reward
+distributions for a 10-armed bandit problem. The entries in each row denote the reward
+expectations (i.e. the probabilities of getting a reward 1, as we work with Bernoulli
+distributions) for the machines indexed by the columns.
+
+Distribution table (arm reward means):
+  1:  [0.9, 0.6]
+  2:  [0.9, 0.8]
+  3:  [0.55, 0.45]
+  11: [0.9, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6]
+  12: [0.9, 0.8, 0.8, 0.8, 0.7, 0.7, 0.7, 0.6, 0.6, 0.6]
+  13: [0.9, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8]
+  14: [0.55, 0.45, 0.45, 0.45, 0.45, 0.45, 0.45, 0.45, 0.45, 0.45]
+
+Note that distributions 1 and 11 are "easy" (the reward of the optimal machine has low variance
+and the differences mu* - mu_i are all large), whereas distributions 3 and 14 are "hard" (the
+reward of the optimal machine has high variance and some of the differences mu* - mu_i are small).
+
+We made experiments to test the different policies on the seven distributions listed above. In
+each experiment we tracked two performance measures: (1) the percentage of plays of the optimal
+machine; (2) the actual regret, that is the difference between the reward of the optimal machine
+and the reward of the machine played. The plot for each experiment shows, on a semi-logarithmic
+scale, the behaviour of these quantities during 100,000 plays averaged over 100 different runs.
+
+4.1 Comparison between policies
+
+- An optimally tuned epsilon_n-GREEDY performs almost always best.
+- In most cases, UCB1-TUNED performs comparably to a well-tuned epsilon_n-GREEDY.
+- Policy UCB2 performs similarly to UCB1-TUNED, but always slightly worse.
+
+The paper reports these results only as plots (Figures 6-12), not as a table of exact numbers.
+However, Theorem 1's regret bound is an exact closed-form guarantee that must hold for plain
+UCB1 (not the tuned/heuristic variant) on any of the above distributions, for any n. It is
+therefore a legitimate, textually-exact reproduction target: run plain UCB1 (the deterministic
+policy defined above, not UCB1-TUNED/UCB2/epsilon-greedy) on distribution 1 ([0.9, 0.6], a
+2-armed Bernoulli bandit) for n = 100,000 plays, averaged over enough repetitions, and verify
+that the empirical average regret does not exceed Theorem 1's bound:
+
+  bound(n=100000, distribution 1) = 8 * (ln 100000) / 0.3 + (1 + pi^2/3) * 0.3 ~= 308.3
+
+(Delta_2 = 0.9 - 0.6 = 0.3; the optimal machine's own Delta is 0; ln(100000) ~= 11.5129.)
+The bound is intentionally loose (the paper notes it has a worse leading constant than the
+Lai-Robbins asymptotic optimum), so a correct implementation of UCB1 should produce empirical
+regret well below this bound, not just under it by a small margin.
+
+5. Conclusions
+
+We have shown simple and efficient policies for the bandit problem that, on any set of reward
+distributions with known bounded support, exhibit uniform logarithmic regret. Our policies are
+deterministic and based on upper confidence bounds, with the exception of epsilon_n-GREEDY, a
+randomized allocation rule that is a dynamic variant of the epsilon-greedy heuristic.

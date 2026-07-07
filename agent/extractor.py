@@ -14,6 +14,13 @@ Extract:
 - Concrete numeric target metrics reported in the paper for the focused experiment, each as a \
 separate TargetMetric with the exact reported_value. Set tolerance_pct higher (e.g. 25-40%) if the \
 experiment involves stochastic simulation, and lower (e.g. 10-15%) for deterministic quantities.
+- comparison_type: use "target_value" (the default) when reported_value is a point-estimate number \
+the paper reports from a specific run (e.g. a reported ratio, accuracy, or regret count) — the \
+reproduction should land close to it in both directions. Use "upper_bound" instead when \
+reported_value comes from a PROVEN theoretical bound/guarantee (e.g. a regret bound formula from a \
+theorem, with the paper's own symbols plugged in as numbers) — being far below the bound is a good \
+sign, not a mismatch, and only exceeding it matters. If the focus hint or paper text gives you a \
+theorem's closed-form bound already evaluated to a number, that is an upper_bound target.
 - CRITICAL — scale invariance: if the reported quantity is scale-dependent (e.g. a cumulative count \
 like total regret/reward/clicks that grows with the time horizon T or number of repetitions), a \
 reduced-scale run CANNOT be compared to it directly — running fewer steps mechanically produces a \

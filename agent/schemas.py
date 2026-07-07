@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, Field, model_validator
 
 
@@ -12,6 +14,14 @@ class TargetMetric(BaseModel):
         default=20.0,
         description="Allowed relative deviation (%) before flagging as a mismatch, "
         "accounting for reduced-scale reproduction and stochastic variance",
+    )
+    comparison_type: Literal["target_value", "upper_bound"] = Field(
+        default="target_value",
+        description="'target_value': observed must be within tolerance_pct of reported_value "
+        "(use for point-estimate reported numbers, e.g. a reported regret ratio). "
+        "'upper_bound': observed must not exceed reported_value by more than tolerance_pct "
+        "(use for a proven theoretical bound/guarantee from the paper, e.g. a regret bound "
+        "formula) — being far below the bound is fine and not a mismatch.",
     )
 
 
