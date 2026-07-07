@@ -1,5 +1,7 @@
 # Paper Repro Agent
 
+[![tests](https://github.com/Kushkusum/paper-repro-agent/actions/workflows/tests.yml/badge.svg)](https://github.com/Kushkusum/paper-repro-agent/actions/workflows/tests.yml)
+
 Autonomous agent that reproduces a paper's reported experimental result at reduced scale:
 
 ```text
