@@ -2,7 +2,9 @@
 
 [![tests](https://github.com/Kushkusum/paper-repro-agent/actions/workflows/tests.yml/badge.svg)](https://github.com/Kushkusum/paper-repro-agent/actions/workflows/tests.yml)
 
-Autonomous agent that reproduces a paper's reported experimental result at reduced scale:
+Autonomous agent that reproduces a paper's reported experimental result at reduced scale. For the
+full story — real results, real bugs found, what didn't work and why — see
+[`CASE_STUDY.md`](CASE_STUDY.md). This README covers setup and usage.
 
 ```text
 paper text --> extractor (LLM) --> PaperSpec (method, setup, target metrics)
