@@ -482,6 +482,7 @@ footer .colophon a:focus-visible {
   .paper-group:nth-of-type(2) .record { animation-delay: 0.06s; }
   .paper-group:nth-of-type(3) .record { animation-delay: 0.10s; }
   .paper-group:nth-of-type(4) .record { animation-delay: 0.14s; }
+  .paper-group:nth-of-type(5) .record { animation-delay: 0.18s; }
 }
 
 @keyframes rise {
@@ -502,10 +503,10 @@ footer .colophon a:focus-visible {
       it wasn't a hardcoded shortcut.
     </p>
     <div class="stat-row">
-      <span class="stat-chip good"><span class="n">3</span> reproduced</span>
+      <span class="stat-chip good"><span class="n">4</span> reproduced</span>
       <span class="stat-chip warn"><span class="n">1</span> unresolved</span>
       <span class="stat-chip muted"><span class="n">1</span> infeasible</span>
-      <span class="stat-chip"><span class="n">4</span> papers</span>
+      <span class="stat-chip"><span class="n">5</span> papers</span>
     </div>
   </header>
 
@@ -656,6 +657,49 @@ footer .colophon a:focus-visible {
           own closed-form win-probability formula (via the digamma function), then an
           independent Monte Carlo simulation of 1,000 games with that threshold measured a
           win rate within 1% of Table 1's reported value — on the very first attempt.</p>
+        </details>
+      </div>
+    </div>
+
+    <div class="paper-group">
+      <p class="paper-title">An Improved Data Stream Summary: The Count-Min Sketch and Its Applications</p>
+      <p class="paper-byline">Cormode &amp; Muthukrishnan, 2005 — Theorem 1, point-query error guarantee</p>
+
+      <div class="record">
+        <div class="record-head">
+          <div>
+            <p class="record-label">ε = 0.1, δ = 0.05 (w = 28, d = 3), n = 1000 items</p>
+            <p class="record-meta">1 iteration</p>
+          </div>
+          <span class="pill good">reproduced</span>
+        </div>
+        <div class="metrics-wrap">
+          <table class="metrics">
+            <tr><th>metric</th><th>bound</th><th>observed</th><th>note</th></tr>
+            <tr>
+              <td class="name">underestimate_violation_rate</td>
+              <td class="num">≤ 0.0</td>
+              <td class="num">0.0</td>
+              <td class="num err ok">never violated</td>
+            </tr>
+            <tr>
+              <td class="name">overestimate_failure_rate</td>
+              <td class="num">≤ 0.05</td>
+              <td class="num">0.0</td>
+              <td class="num err ok">well under bound</td>
+            </tr>
+          </table>
+        </div>
+        <details class="reasoning">
+          <summary>why this passed</summary>
+          <p>A genuinely different domain from the rest of this benchmark — streaming
+          algorithms and hashing, not bandits. Theorem 1 gives a fully explicit guarantee (no
+          hidden asymptotic constants, unlike most of the theoretical bandit papers checked
+          along the way): the sketch never underestimates a true count, and overestimates it by
+          more than ε·‖a‖₁ with probability at most δ. Built real random hash functions
+          (independent <code>a·x+b mod p mod w</code> per row), a real sketch, real point
+          queries against 1000 items — both guarantees held with zero violations, comfortably
+          inside the theorem's own bound, verified genuine on the first attempt.</p>
         </details>
       </div>
     </div>

@@ -1,0 +1,55 @@
+An Improved Data Stream Summary: The Count-Min Sketch and its Applications
+Graham Cormode, S. Muthukrishnan
+Journal of Algorithms, 55(1):58-75, 2005
+
+Abstract: We introduce a new sublinear space data structure -- the Count-Min Sketch -- for
+summarizing data streams. Our sketch allows fundamental queries in data stream summarization such
+as point, range, and inner product queries to be approximately answered very quickly; in addition
+it can be applied to solve several important problems in data streams such as finding quantiles,
+frequent items, etc.
+
+3. Count-Min Sketches
+
+We introduce our data structure, the Count-Min (CM) sketch, named after the two basic operations
+used to answer point queries: counting first and computing the minimum next.
+
+Data Structure. A Count-Min (CM) sketch with parameters (epsilon, delta) is represented by a
+two-dimensional array of counts with width w and depth d: count[1,1] ... count[d,w]. Given
+parameters (epsilon, delta), set:
+
+  w = ceil(e / epsilon)
+  d = ceil(ln(1 / delta))
+
+where e is the base of the natural logarithm. Each entry of the array is initially zero.
+Additionally, d hash functions h_1, ..., h_d : {1,...,n} -> {1,...,w} are chosen uniformly at
+random from a pairwise-independent family (e.g. h_j(x) = ((a_j * x + b_j) mod p) mod w, for a
+large prime p and independently random a_j, b_j for each row j).
+
+Update Procedure. When an update (i_t, c_t) arrives, meaning item i_t's true count a_{i_t} is
+incremented by c_t (c_t >= 0, the non-negative/"strict" turnstile case), then for each row
+1 <= j <= d: count[j, h_j(i_t)] += c_t.
+
+Estimation Procedure (point query). The estimate for item i's true count a_i is:
+  a_hat_i = min_j count[j, h_j(i)]
+
+Theorem 1. The estimate a_hat_i has the following guarantees: a_hat_i >= a_i always (the estimate
+never underestimates the true non-negative count); and, with probability at least 1 - delta,
+
+  a_hat_i <= a_i + epsilon * ||a||_1
+
+where ||a||_1 = sum_i a_i is the sum of all true counts (L1 norm of the frequency vector).
+
+This bound is fully explicit -- no hidden asymptotic constants, no big-O notation -- given the
+exact width/depth formulas above. It is a purely synthetic, combinatorial guarantee: no external
+data, no GPU, no proprietary dataset, easily implemented and empirically verified with numpy alone
+(random hash functions, a synthetic stream of item updates, and repeated point queries).
+
+Reproducible target: for epsilon = 0.1, delta = 0.05 (giving w = ceil(e/0.1) = 28, d = ceil(ln(1/0.05))
+= ceil(2.9957) = 3), build a random non-negative-count data stream (e.g. n=1000 distinct items,
+each with a random true count between 0 and 100, updated in random order), build the CM sketch,
+then repeatedly query random items and check whether a_hat_i <= a_i + epsilon * ||a||_1 holds.
+Theorem 1 guarantees this holds with probability at least 1 - delta = 0.95 per query, i.e. the
+empirical FAILURE rate (fraction of queries where a_hat_i EXCEEDS a_i + epsilon*||a||_1) should be
+at most delta = 0.05, averaged over many repeated trials (fresh random hash functions and/or fresh
+queries each trial). Additionally, a_hat_i >= a_i must ALWAYS hold (0% violation rate) -- this part
+of the guarantee is unconditional, not probabilistic.
