@@ -9,9 +9,11 @@ from .diagnostic import diagnose
 from .evaluator import evaluate
 from .extractor import extract_spec
 from .feasibility import assess_feasibility
+from .legitimacy import verify_legitimacy
+from .pdf_ingest import load_paper_text
 from .planner import draft_plan
 from .report import write_report
-from .schemas import FeasibilityAssessment, IterationRecord, ReproductionReport
+from .schemas import Diagnosis, FeasibilityAssessment, IterationRecord, ReproductionReport
 
 RUNS_DIR = Path(__file__).resolve().parent.parent / "runs"
 
@@ -32,10 +34,12 @@ def run_pipeline(
     run_dir = RUNS_DIR / f"{timestamp}_{_slugify(paper_title)}"
     run_dir.mkdir(parents=True, exist_ok=True)
 
-    paper_text = paper_path.read_text(encoding="utf-8")
     feasibility: FeasibilityAssessment | None = None
 
     try:
+        log(f"Reading {paper_path.name}...")
+        paper_text = load_paper_text(paper_path)
+
         log("[1/6] Extracting structured spec from paper...")
         spec = extract_spec(paper_text, focus_hint)
         (run_dir / "spec.json").write_text(spec.model_dump_json(indent=2), encoding="utf-8")
@@ -83,12 +87,50 @@ def run_pipeline(
             log(f"  -> all_within_tolerance={evaluation.all_within_tolerance}")
 
             if evaluation.all_within_tolerance:
-                iterations.append(IterationRecord(iteration=i, sandbox_result=result, evaluation=evaluation))
-                final_verdict = "reproduced"
-                final_reasoning = (
-                    f"All {len(spec.target_metrics)} target metric(s) fell within tolerance on iteration {i}."
+                log("  -> metrics match; verifying the match is genuine (not a hardcoded/formula pass-through)...")
+                legitimacy = verify_legitimacy(spec, code, result)
+                log(f"  -> genuine={legitimacy.genuine}")
+                if legitimacy.genuine:
+                    iterations.append(
+                        IterationRecord(
+                            iteration=i, sandbox_result=result, evaluation=evaluation, legitimacy=legitimacy
+                        )
+                    )
+                    final_verdict = "reproduced"
+                    final_reasoning = (
+                        f"All {len(spec.target_metrics)} target metric(s) fell within tolerance on "
+                        f"iteration {i}, and the match was verified as a genuine measurement, not a "
+                        "hardcoded/formula pass-through."
+                    )
+                    break
+
+                log("  -> match rejected as non-genuine; treating as a bug and retrying...")
+                diagnosis = Diagnosis(
+                    verdict="bug",
+                    reasoning=legitimacy.reasoning,
+                    proposed_fix="Compute the reported metric from the actual simulated data (the "
+                    "quantity produced by running the random/simulated process), not from a formula "
+                    "or the target value evaluated directly.",
                 )
-                break
+                iterations.append(
+                    IterationRecord(
+                        iteration=i,
+                        sandbox_result=result,
+                        evaluation=evaluation,
+                        diagnosis=diagnosis,
+                        legitimacy=legitimacy,
+                    )
+                )
+                if i == max_iterations:
+                    final_verdict = "unresolved_after_max_iterations"
+                    final_reasoning = (
+                        f"Reached the cap of {max_iterations} iterations; the last apparent match was "
+                        f"rejected as non-genuine: {legitimacy.reasoning}"
+                    )
+                    break
+                log("  -> patching code and retrying...")
+                code = coder.revise_code(plan, spec, code, result, diagnosis)
+                continue
 
             log("  -> mismatch detected, running diagnostic sub-agent...")
             diagnosis = diagnose(spec, code, result, evaluation)

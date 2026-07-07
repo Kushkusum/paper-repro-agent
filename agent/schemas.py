@@ -116,6 +116,15 @@ class EvaluationResult(BaseModel):
     comparisons: list[MetricComparison]
 
 
+class LegitimacyCheck(BaseModel):
+    genuine: bool
+    reasoning: str = Field(
+        description="Whether the reported metric value is a real, independent measurement derived "
+        "from simulated/random data, or a hardcoded/derived pass-through of the target value, the "
+        "reported_value, or a supplied formula's inputs evaluated directly without using the simulation"
+    )
+
+
 class Diagnosis(BaseModel):
     verdict: str = Field(description="One of: 'bug', 'setup_mismatch', 'insufficient_scale', 'unclear'")
     reasoning: str
@@ -127,6 +136,7 @@ class IterationRecord(BaseModel):
     sandbox_result: SandboxResult
     evaluation: EvaluationResult
     diagnosis: Diagnosis | None = None
+    legitimacy: LegitimacyCheck | None = None
 
 
 class ReproductionReport(BaseModel):

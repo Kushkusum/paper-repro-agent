@@ -52,6 +52,9 @@ def render_markdown(report: ReproductionReport) -> str:
             obs = f"{c.observed_value:.4g}" if c.observed_value is not None else "N/A"
             err = f"{c.relative_error_pct:.1f}" if c.relative_error_pct is not None else "N/A"
             lines.append(f"| {c.name} | {c.reported_value:.4g} | {obs} | {err} | {c.tolerance_pct} | {c.within_tolerance} |")
+        if it.legitimacy:
+            lines.append("")
+            lines.append(f"**Legitimacy check (genuine={it.legitimacy.genuine}):** {it.legitimacy.reasoning}")
         if it.diagnosis:
             lines.append("")
             lines.append(f"**Diagnosis ({it.diagnosis.verdict}):** {it.diagnosis.reasoning}")

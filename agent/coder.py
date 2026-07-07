@@ -31,12 +31,22 @@ it literally — accumulate observations each step, but only update the decision
 the last update; actions in between must be chosen using the stale, not-yet-updated statistics. A \
 delay parameter that is computed but never actually changes what data the decision rule sees (e.g. \
 `if t % delay == 0: pass`) does not implement delay at all — it must gate when statistics update.
-- The program's LAST line of stdout must be exactly `RESULTS_JSON: {...}` — a single-line, \
-strictly-valid JSON object (double-quoted keys, no trailing commas, no Python-isms) mapping each \
-target metric name to a numeric value. You MUST build it with `json.dumps(...)` — never with \
-`print(dict)`, f-string interpolation of a dict, or str()/repr(). Cast every value to a plain \
-Python `float(...)` first — numpy scalar types (np.float64, np.int64, etc.) do not serialize to \
-valid JSON and will break parsing.
+- The program's LAST line of stdout must be exactly `RESULTS_JSON: {...}` — the literal text \
+`RESULTS_JSON: ` (with that exact prefix, colon, and space) followed by a single-line, strictly-valid \
+JSON object (double-quoted keys, no trailing commas, no Python-isms) mapping each target metric name \
+to a numeric value. You MUST build it with `json.dumps(...)` — never with `print(dict)`, f-string \
+interpolation of a dict, or str()/repr(). Cast every value to a plain Python `float(...)` first — \
+numpy scalar types (np.float64, np.int64, etc.) do not serialize to valid JSON and will break parsing. \
+A bare `print(json.dumps(...))` WITHOUT the `RESULTS_JSON:` prefix is wrong and will not be parsed.
+- Every file that defines a `main()` function MUST also call it — end the entrypoint file with \
+`if __name__ == "__main__":\n    main()` (or call it directly at module level). A file that defines \
+`main()` but never invokes it will run successfully, print nothing, and silently produce no result.
+- Compute every reported metric independently from the simulation you just ran. Never assign a \
+metric's value to equal (or be derived directly from) the paper's reported/target number, a \
+theoretical bound formula's own value, or any other value that was handed to you as ground truth — \
+that would just echo the answer back instead of measuring it. The whole point is to compute the \
+metric from actual simulated data and let it be compared to the target afterward, by code outside \
+this file.
 - Seed the RNG exactly ONCE, at the very top of main(), before the repetitions loop — never re-seed \
 inside a function that gets called per-repetition or per-algorithm, or every "repetition" will replay \
 the identical trajectory and the average will not reduce noise at all (a very common, easy-to-miss \
@@ -86,6 +96,17 @@ def _parse_generated_code(raw: str) -> GeneratedCode:
     cmd_m = re.search(r"###\s*RUN_COMMAND:\s*(.+)", raw)
     entrypoint = entry_m.group(1).strip() if entry_m else files[0].filename
     run_command = cmd_m.group(1).strip() if cmd_m else f"python {entrypoint}"
+
+    entry_file = next((f for f in files if f.filename == entrypoint), files[0])
+    if re.search(r"^\s*def\s+main\s*\(", entry_file.content, re.MULTILINE):
+        has_dunder_main = "__main__" in entry_file.content
+        # A call to main(...) that isn't the "def main(" line itself.
+        has_call = re.search(r"(?<!def\s)\bmain\s*\(", entry_file.content.replace("def main(", "", 1))
+        if not has_dunder_main and not has_call:
+            raise ValueError(
+                f"{entrypoint} defines main() but never calls it (no `if __name__ == '__main__':` "
+                "guard and no direct call) — running it would silently produce no output."
+            )
     return GeneratedCode(files=files, entrypoint=entrypoint, run_command=run_command)
 
 
