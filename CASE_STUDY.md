@@ -127,7 +127,7 @@ is itself a finding worth stating plainly: *most* theoretical ML papers don't gi
 number to check against — precisely the "building a fair benchmark" challenge the original project
 brief called out, encountered directly rather than assumed.
 
-## Two extensions past plain reproduction
+## Extensions past plain reproduction
 
 **Propose and test a novel variant.** After a genuine reproduction, the agent can go one step
 further: propose one small, method-grounded change, state a falsifiable prediction for which
@@ -163,6 +163,24 @@ regression-tested. What's left unresolved and stated plainly rather than papered
 model still occasionally calls two claims "contradictory" when they're actually just about
 different specific comparisons — a real limitation of a small cross-encoder, not a bug to chase
 down right now. Full writeup: [`LITERATURE_GRAPH.md`](LITERATURE_GRAPH.md).
+
+**Self-rewarding fine-tuning, phase 1.** The third and last piece of the "Autonomous Research
+Scientist" merge: a model samples candidates, judges its own outputs, and the ranked pairs train
+the next round via DPO. Applied to this project's own history — the legitimacy check and
+diagnostic sub-agent have already been judging this project's own generated code as genuine/buggy
+all along, so that judged history is real, unused preference data. `agent/preference_data.py`
+mines 3 real `(chosen, rejected)` code pairs straight out of `runs/`, and
+`finetune_self_rewarding.py` trains a LoRA adapter on a tiny CPU-only model (`distilgpt2`, 82M
+params) via TRL's DPOTrainer — no GPU, no paid API, same constraint as everything else here. The
+actual training run produced a real, checkable signal: loss dropped from 0.6931 (pure chance) to
+0.61, and `rewards/accuracies` — the fraction of pairs where the model correctly preferred chosen
+over rejected — hit 1.0 within 2 of 9 steps. That proves the loop's mechanics genuinely work on
+this exact hardware. It does not prove the adapter is a better coder: 3 examples on an 82M-param
+model is enough capacity to memorize those 3 examples, not to generalize. Scaling this to something
+that actually improves the free fallback model's documented weak spots (the delayed-batch-feedback
+bug, the tautological-pass-through pattern) would need real GPU compute and hundreds more
+reproduction runs' worth of preference data — stated as a real next step, not attempted here. Full
+writeup: [`SELF_REWARDING.md`](SELF_REWARDING.md).
 
 ## Engineering practices
 

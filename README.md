@@ -73,6 +73,17 @@ same UCB1 cross-paper agreement above with no hints about which papers or claims
 [`LITERATURE_GRAPH.md`](LITERATURE_GRAPH.md) for the real findings, including an honest NLI-model
 limitation and a genuine entity-linking bug found and fixed along the way.
 
+## Self-rewarding fine-tuning loop
+
+`python finetune_self_rewarding.py` mines real `(chosen, rejected)` code pairs directly out of this
+project's own `runs/` history (a genuine reproduction vs. an earlier buggy attempt at the same
+task; the UCB1 legitimacy-check story repurposed as a labeled example) and trains a LoRA adapter on
+a tiny CPU-only model via DPO — no GPU, no paid API. See
+[`SELF_REWARDING.md`](SELF_REWARDING.md) for what the real training run proved (the loop's
+mechanics genuinely work — `rewards/accuracies` hit 1.0 within 2 steps) and what it honestly
+doesn't (3 examples on an 82M-parameter model isn't enough to produce a better coder, by design of
+this phase).
+
 ## Proposing a novel variant
 
 Add `--propose-variant` to have the agent go one step past reproduction: once a result is
