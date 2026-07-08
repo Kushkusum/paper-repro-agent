@@ -185,3 +185,29 @@ class ReproductionReport(BaseModel):
     final_reasoning: str
     variant: VariantResult | None = None
     budget: BudgetSummary | None = None
+
+
+class Claim(BaseModel):
+    text: str = Field(
+        description="The claim in plain language, self-contained -- understandable without reading the paper"
+    )
+    entities: list[str] = Field(
+        description="Key named entities/concepts this claim is about (algorithm names, problem names, "
+        "specific quantities) -- used to link claims across papers that discuss the same thing"
+    )
+    evidence_quote: str = Field(description="A short verbatim quote from the paper supporting this claim")
+
+
+class PaperClaims(BaseModel):
+    paper_title: str
+    claims: list[Claim]
+
+
+class ClaimRelation(BaseModel):
+    paper_a: str
+    claim_a: str
+    paper_b: str
+    claim_b: str
+    shared_entity: str
+    label: Literal["entailment", "contradiction", "neutral"]
+    confidence: float

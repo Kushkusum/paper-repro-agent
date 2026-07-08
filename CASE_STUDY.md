@@ -148,6 +148,22 @@ UCB1 regret bound — one deriving it, the other citing it in related work. The 
 reproduction validates both papers' shared claim in a single run; see
 [`CROSS_PAPER_COMPARISON.md`](CROSS_PAPER_COMPARISON.md).
 
+**Reading a whole corpus, not just one paper at a time.** The natural next question after finding
+that one cross-paper agreement by hand was whether it could be found automatically, at corpus
+scale, without being told where to look. `literature_graph.py` extracts claims from every paper in
+the benchmark, links claims across papers sharing a named entity, and scores each linked pair with
+a small pretrained NLI model (CPU-only, no fine-tuning). It rediscovered the exact same UCB1
+agreement with no hints. It also produced two false positives worth being honest about rather than
+hiding: generic math symbols (`Delta_i`, `epsilon`) recur across unrelated papers with unrelated
+meanings, and a looser substring-matching heuristic linked them anyway — including one subtle case
+where `Delta_i` normalizes to `delta_i`, which happens to *contain* an unrelated symbol (`a_i`) as
+a character coincidence, not a real relationship. Fixed by switching from "is one a substring of
+the other" to "does one share a prefix with the other," and both false-positive classes are now
+regression-tested. What's left unresolved and stated plainly rather than papered over: the NLI
+model still occasionally calls two claims "contradictory" when they're actually just about
+different specific comparisons — a real limitation of a small cross-encoder, not a bug to chase
+down right now. Full writeup: [`LITERATURE_GRAPH.md`](LITERATURE_GRAPH.md).
+
 ## Engineering practices
 
 - **37 tests**, covering the pipeline's own logic (parsing, evaluator comparison modes, the

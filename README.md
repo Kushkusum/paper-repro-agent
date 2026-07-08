@@ -64,6 +64,15 @@ apart, turn out to state the identical closed-form UCB1 regret bound — one der
 citing it. This benchmark's existing UCB1 reproduction verifies both papers' shared claim in a
 single run.
 
+## Literature claim graph (reads a whole corpus, not just one paper)
+
+`python literature_graph.py` extracts checkable claims from every paper in `papers/`, links claims
+across papers that share a named entity/concept, and runs a small pretrained NLI model (CPU-only,
+no fine-tuning) to flag which linked pairs agree or disagree. It automatically rediscovered the
+same UCB1 cross-paper agreement above with no hints about which papers or claims to compare — see
+[`LITERATURE_GRAPH.md`](LITERATURE_GRAPH.md) for the real findings, including an honest NLI-model
+limitation and a genuine entity-linking bug found and fixed along the way.
+
 ## Proposing a novel variant
 
 Add `--propose-variant` to have the agent go one step past reproduction: once a result is
