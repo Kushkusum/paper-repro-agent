@@ -212,7 +212,12 @@ writeup: [`SELF_REWARDING.md`](SELF_REWARDING.md).
   further engineering.
 - **LaTeX source ingestion** isn't built (PDF text extraction covers the common case).
 - **Single LLM provider.** Only Groq is wired in; the fallback-chain architecture would generalize
-  to a second provider, but none is configured.
+  to a second provider, but none is configured. That said, `compare_models.py` (see
+  [`CROSS_MODEL_COMPARISON.md`](CROSS_MODEL_COMPARISON.md)) now empirically compares the three
+  free models Groq does offer, single-shot on two structurally different tasks — real result: the
+  "flagship" 70B model was not the best coder (a smaller model passed both tasks; 70B failed one on
+  a hash-function-reuse bug; the fastest/smallest model failed both, twice on the same explicit
+  instruction it was given and once with a crash).
 - **Diagnostic precision on deep algorithmic misunderstandings** (like the delay mechanism) is
   weaker than on mechanical bugs (JSON formatting, syntax errors, missing invocation) — it reliably
   says "this is a bug" but doesn't always pinpoint *why* precisely enough for a weak coder model to

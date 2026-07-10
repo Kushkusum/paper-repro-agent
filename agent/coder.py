@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import re
 
-from .llm import call_text
+from .llm import DEFAULT_MODEL, call_text
 from .schemas import CodeArtifact, Diagnosis, GeneratedCode, ImplementationPlan, PaperSpec, SandboxResult
 
 FORMAT_INSTRUCTIONS = """Output ONLY code files in this exact delimited format, nothing else:
@@ -116,11 +116,11 @@ def _parse_generated_code(raw: str) -> GeneratedCode:
 CODE_MAX_TOKENS = 6000
 
 
-def _generate_with_retry(user_prompt: str, max_retries: int = 3) -> GeneratedCode:
+def _generate_with_retry(user_prompt: str, model: str = DEFAULT_MODEL, max_retries: int = 3) -> GeneratedCode:
     messages_context = user_prompt
     last_error = ""
     for _attempt in range(max_retries):
-        raw = call_text(SYSTEM_PROMPT, messages_context, temperature=0.2, max_tokens=CODE_MAX_TOKENS)
+        raw = call_text(SYSTEM_PROMPT, messages_context, model=model, temperature=0.2, max_tokens=CODE_MAX_TOKENS)
         try:
             return _parse_generated_code(raw)
         except ValueError as e:
@@ -136,13 +136,13 @@ def _generate_with_retry(user_prompt: str, max_retries: int = 3) -> GeneratedCod
     raise RuntimeError(f"Failed to get valid generated code after {max_retries} attempts: {last_error}")
 
 
-def generate_code(plan: ImplementationPlan, spec: PaperSpec) -> GeneratedCode:
+def generate_code(plan: ImplementationPlan, spec: PaperSpec, model: str = DEFAULT_MODEL) -> GeneratedCode:
     user_prompt = (
         f"PAPER SPEC:\n{json.dumps(spec.model_dump(), indent=2)}\n\n"
         f"IMPLEMENTATION PLAN:\n{json.dumps(plan.model_dump(), indent=2)}\n\n"
         f"{FORMAT_INSTRUCTIONS}"
     )
-    return _generate_with_retry(user_prompt)
+    return _generate_with_retry(user_prompt, model=model)
 
 
 def revise_code(
@@ -151,6 +151,7 @@ def revise_code(
     previous_code: GeneratedCode,
     sandbox_result: SandboxResult,
     diagnosis: Diagnosis,
+    model: str = DEFAULT_MODEL,
 ) -> GeneratedCode:
     prev_files = "\n\n".join(f"### FILE: {f.filename}\n{f.content}\n### ENDFILE" for f in previous_code.files)
     user_prompt = (
@@ -164,4 +165,4 @@ def revise_code(
         "Rewrite the full code (all files) with the fix applied.\n\n"
         f"{FORMAT_INSTRUCTIONS}"
     )
-    return _generate_with_retry(user_prompt)
+    return _generate_with_retry(user_prompt, model=model)

@@ -98,6 +98,18 @@ accidentally confessed the label in plain English; stripping every tell and re-r
 in what the check verifies. See [`LEGITIMACY_EVAL.md`](LEGITIMACY_EVAL.md) for the full story and
 what the result does and doesn't establish.
 
+## Cross-model empirical comparison
+
+`python compare_models.py` reuses the same model-fallback infrastructure for a different purpose:
+holding a paper's spec/plan fixed (from an already-verified run) and swapping only which of the
+three free Groq models writes the code, single-shot, across two structurally different tasks. Real
+result: the "flagship" 70B model was not the best coder — a smaller model (`llama-4-scout`) passed
+both tasks while 70B failed one (a hash-function reuse bug) and the fastest/smallest model failed
+both (once missing the required `RESULTS_JSON:` prefix despite the prompt explicitly warning
+against exactly that mistake, once crashing with a `NameError`). See
+[`CROSS_MODEL_COMPARISON.md`](CROSS_MODEL_COMPARISON.md) for the full diagnosis of each failure
+and what a 2-task, single-shot sample does and doesn't establish.
+
 ## Proposing a novel variant
 
 Add `--propose-variant` to have the agent go one step past reproduction: once a result is
