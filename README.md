@@ -84,6 +84,17 @@ mechanics genuinely work — `rewards/accuracies` hit 1.0 within 2 steps) and wh
 doesn't (3 examples on an 82M-parameter model isn't enough to produce a better coder, by design of
 this phase).
 
+## Adversarial evaluation of the legitimacy check
+
+`python run_legitimacy_eval.py` scores the real `verify_legitimacy()` function (the check that
+originally caught a fallback model reporting a theorem's bound formula as a "measurement" — see
+`CROSS_PAPER_COMPARISON.md`) against 11 labeled genuine/cheating code samples covering 7 distinct
+cheat patterns, producing a real confusion matrix instead of one anecdote. The first run scored a
+suspicious 11/11 — which turned out to be because several test cases' comments and variable names
+accidentally confessed the label in plain English. See [`LEGITIMACY_EVAL.md`](LEGITIMACY_EVAL.md)
+for the fix (stripped all label-leaking tells, re-ran, still 11/11 — this time backed by reasoning
+traces that cite actual data flow) and what the result does and doesn't establish.
+
 ## Proposing a novel variant
 
 Add `--propose-variant` to have the agent go one step past reproduction: once a result is
