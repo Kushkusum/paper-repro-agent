@@ -100,7 +100,10 @@ Six real bugs were found through actually running the pipeline, not through insp
    names, making its 100% score meaningless until fixed) and, after that fix, found a real gap in
    the checker itself: it verifies a reported value traces to genuine randomness, but not that it's
    the *right* quantity, so a case that genuinely measures the wrong statistic slips through
-   (precision 0.80, recall 1.00 on the full set).
+   (precision 0.80, recall 1.00 on the full set). Two escalating prompt rewrites aimed at closing
+   that gap both failed the same held-out case — the model could articulate the rule and still
+   talk itself past it, which says more about the reasoning limits of a free 70B model than about
+   prompt wording, and is documented as open work rather than a false "fixed it."
 
 ## What didn't work, and why that's still useful data
 

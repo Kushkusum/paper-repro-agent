@@ -101,10 +101,48 @@ its name/key).
 
 **Doesn't establish**: that the other seven patterns generalize beyond the exact cases tried, or
 that a more adversarial cheat (e.g. a plausible-looking synthetic simulation loop whose random
-draws are seeded to hit a target) would still be caught. The metric-substitution miss suggests a
-concrete next fix: extend `verify_legitimacy()`'s prompt to also check the reported computation
-against the target metric's `description` field, not just whether real randomness was involved
-anywhere in the file. 12 cases is enough to catch a self-inflicted evaluation flaw and find one
-real gap in the check itself — it is not enough to certify the check against an adaptive
-adversary. Growing this set with harder cases as they're discovered (the same way the original bug,
-and this gap, were discovered) is the natural next step, not a one-time exercise.
+draws are seeded to hit a target) would still be caught. 12 cases is enough to catch a
+self-inflicted evaluation flaw and find one real gap in the check itself — it is not enough to
+certify the check against an adaptive adversary.
+
+## Trying to fix the gap, and what that attempt itself revealed
+
+The obvious next step was to extend `verify_legitimacy()`'s prompt to also check the reported
+computation against the target metric's `description`, not just whether real randomness was
+involved anywhere in the file. Two escalating attempts:
+
+**Attempt 1** — added a bullet telling the checker to compare what's computed against what the
+`description` asks for. Re-ran: still missed, same false positive. The reasoning showed why: the
+model conceded the comparison should happen, then didn't apply it rigorously — *"it matches the
+target metric's description... However, the code does not directly measure the 'true_counts'...
+which implies that the code is measuring a related quantity"* — accepting "related" in place of
+"required."
+
+**Attempt 2** — rewrote the instruction as a mandatory, ordered first step: list every specific
+quantity the `description` names, search the code for something representing each one, and flag
+genuine=false immediately if any named quantity has no corresponding thing in the code — explicitly
+*before and independent of* whether the computation looks like a plausible measurement. Re-ran:
+**still missed**, with the same false positive, exact same confusion matrix (precision 0.80, recall
+1.00, F1 0.89, accuracy 0.92). The model now correctly identifies the missing quantity by name, and
+still talks itself past it: *"The description... names the quantity 'true count' (true_counts)
+which is not directly computed in the code, but the concept of 'true count' is represented through
+the simulation of collisions."* Hash collisions are not true counts by any reasonable reading — the
+model invented an equivalence between two different sources of randomness rather than admitting the
+required quantity is absent.
+
+I stopped after two attempts rather than continuing to iterate the prompt against this one held-out
+case. Tuning a prompt until it happens to pass a specific adversarial example is itself a
+methodological trap — it can produce a check that passes this test suite by memorizing this
+example's wording, not one that generalizes to the next metric-substitution cheat that phrases
+things differently. That would defeat the entire point of adversarial testing.
+
+**What this attempt actually shows**: this isn't a one-line prompt bug, it's closer to a reasoning
+limit of a free-tier 70B model at low temperature — it can articulate the correct rule and still
+rationalize an exception to it when the surface-level computation looks sufficiently plausible.
+Fixing this for real likely needs a different mechanism, not better wording: e.g. a second,
+independent verification pass that only checks quantity-presence and can't see (or be swayed by)
+the "does this look like a real simulation" framing at all, or forcing a structured intermediate
+answer (list quantities found / not found) before allowing a genuine/not-genuine verdict, rather
+than trusting free-form reasoning to self-apply the rule. That's next work, not a doc-only footnote
+— growing this adversarial set with harder cases, and this specific gap, is the natural next step,
+not a one-time exercise.
