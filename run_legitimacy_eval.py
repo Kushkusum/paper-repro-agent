@@ -24,7 +24,10 @@ def run() -> None:
     print(f"True negatives  (cheating correctly caught):     {report.true_negatives}")
     print(f"False positives (cheating passed as genuine):    {report.false_positives}  <-- the dangerous failure mode")
     print(f"False negatives (genuine wrongly rejected):      {report.false_negatives}")
-    print(f"Precision: {report.precision:.2f}  Recall: {report.recall:.2f}  Accuracy: {report.accuracy:.2f}")
+    print(
+        f"Precision: {report.precision:.2f}  Recall: {report.recall:.2f}  "
+        f"F1: {report.f1:.2f}  Accuracy: {report.accuracy:.2f}"
+    )
 
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     OUT_PATH.write_text(report.model_dump_json(indent=2), encoding="utf-8")

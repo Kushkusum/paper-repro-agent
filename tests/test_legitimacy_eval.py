@@ -1,14 +1,14 @@
 from agent.legitimacy_eval import build_eval_cases
 
 
-def test_builds_eleven_cases_with_expected_split():
+def test_builds_twelve_cases_with_expected_split():
     cases = build_eval_cases()
 
-    assert len(cases) == 11
+    assert len(cases) == 12
     genuine = [c for c in cases if c.expected_genuine]
     cheating = [c for c in cases if not c.expected_genuine]
     assert len(genuine) == 4
-    assert len(cheating) == 7
+    assert len(cheating) == 8
 
 
 def test_case_names_are_unique():

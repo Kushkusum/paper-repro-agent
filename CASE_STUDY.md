@@ -94,10 +94,13 @@ Six real bugs were found through actually running the pipeline, not through insp
    that now runs on every apparent match, reviewing whether the reported value traces back to real
    simulated data or a hardcoded/formula pass-through, before the verdict is allowed to be
    "reproduced." A rejected match is routed back into the same patch-and-retry loop as an ordinary
-   bug. This one anecdote was later turned into a proper 11-case adversarial evaluation (see
-   [`LEGITIMACY_EVAL.md`](LEGITIMACY_EVAL.md)) — which caught a second, self-inflicted bug: the
+   bug. This one anecdote was later turned into a proper 12-case adversarial evaluation (see
+   [`LEGITIMACY_EVAL.md`](LEGITIMACY_EVAL.md)) — which caught a second, self-inflicted bug (the
    first version of that evaluation's own test cases leaked their labels via comments and variable
-   names, making its 100% score meaningless until fixed.
+   names, making its 100% score meaningless until fixed) and, after that fix, found a real gap in
+   the checker itself: it verifies a reported value traces to genuine randomness, but not that it's
+   the *right* quantity, so a case that genuinely measures the wrong statistic slips through
+   (precision 0.80, recall 1.00 on the full set).
 
 ## What didn't work, and why that's still useful data
 
